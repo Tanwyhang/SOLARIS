@@ -70,7 +70,6 @@ class SOLARIS(ctk.CTk):
         
         # Sample data
         subject_weights = sub_weight_set
-        print(sub_weight_set)
         
         total_credits = sum(subject_weights.values())
         
@@ -180,7 +179,6 @@ class SOLARIS(ctk.CTk):
         self.subject_data = self.load_subjects_from_json("subject_data.json") # [{'subject': 'Math', 'grade': 'A', 'gp': 4.0, 'credits': 3}, {'subject': 'English', 'grade': 'B+', 'gp': 3.33, 'credits': 4}, {'subject': 'HISTORY', 'grade': 'A+', 'gp': 4.0, 'credits': 3.0}]
         self.gp_and_credits = [(i["gp"],i["credits"]) for i in self.subject_data] # [(4.0, 3), (3.33, 4), (4.0, 3.0)]
         self.sub_weight = {i["subject"]:i["credits"] for i in self.subject_data} # {'Math': 3, 'English': 4, 'HISTORY': 3.0}
-        print(self.sub_weight, self.gp_and_credits, self.subject_data)
 
         self.calculate_gpa(self.gp_and_credits)
         self.draw_pie_chart(self.sub_weight)
@@ -228,8 +226,6 @@ class SOLARIS(ctk.CTk):
         if self.subject_data:  # Only calculate if there's data
             self.calculate_gpa(self.gp_and_credits)
             self.draw_pie_chart(self.sub_weight)
-        
-        print(self.sub_weight, self.gp_and_credits, self.subject_data)  # Debug print
 
     
     def add_subject(self):
