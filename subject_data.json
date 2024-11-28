@@ -1,52 +1,58 @@
 {
     "subjects": [
         {
+            "subject": "MALAY",
+            "grade": "B+",
+            "gp": 3.33,
+            "credits": 2.0
+        },
+        {
+            "subject": "PROGRAM",
+            "grade": "A+",
+            "gp": 4.0,
+            "credits": 10.0
+        },
+        {
             "subject": "HISTORY",
             "grade": "A+",
             "gp": 4.0,
-            "credits": 4.0
+            "credits": 8.0
         },
         {
-            "subject": "DAMN",
-            "grade": "C",
-            "gp": 2.0,
-            "credits": 2.0
-        },
-        {
-            "subject": "ARC",
+            "subject": "ARCHITECTURE",
             "grade": "A-",
             "gp": 3.75,
-            "credits": 2.0
+            "credits": 10.0
         },
         {
-            "subject": "OK",
-            "grade": "A+",
-            "gp": 4.0,
-            "credits": 3.0
-        },
-        {
-            "subject": "TEST2",
-            "grade": "A+",
-            "gp": 4.0,
-            "credits": 3.0
-        },
-        {
-            "subject": "TEST3",
-            "grade": "A+",
-            "gp": 4.0,
-            "credits": 2.0
-        },
-        {
-            "subject": "DAMNN",
-            "grade": "C",
-            "gp": 2.0,
-            "credits": 2.0
-        },
-        {
-            "subject": "WOAH",
-            "grade": "D",
-            "gp": 1.0,
+            "subject": "CRYPTO",
+            "grade": "B",
+            "gp": 3.0,
             "credits": 6.0
+        },
+        {
+            "subject": "STATS",
+            "grade": "B+",
+            "gp": 3.33,
+            "credits": 7.0
+        },
+        {
+            "subject": "PYTHON",
+            "grade": "B",
+            "gp": 3.0,
+            "credits": 10.0
+        },
+        {
+            "subject": "DATING",
+            "grade": "A+",
+            "gp": 4.0,
+            "credits": 15.0
+        },
+        {
+            "subject": "FAP",
+            "grade": "B+",
+            "gp": 3.33,
+            "credits": 12.0
         }
     ]
 }

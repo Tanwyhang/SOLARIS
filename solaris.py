@@ -302,7 +302,7 @@ class SOLARIS(ctk.CTk):
 
         # BLOCK OF CODE TO LOAD AND POPULATE THE ARRAYS
         self.subject_data = self.load_subjects_from_json("subject_data.json") # [{'subject': 'Math', 'grade': 'A', 'gp': 4.0, 'credits': 3}, {'subject': 'English', 'grade': 'B+', 'gp': 3.33, 'credits': 4}, {'subject': 'HISTORY', 'grade': 'A+', 'gp': 4.0, 'credits': 3.0}]
-        self.gp_and_credits = [(i["gp"],i["credits"]) for i in self.subject_data] # [(4.0, 3), (3.33, 4), (4.0, 3.0)]
+        self.gp_and_credits = [(i["gp"],i["credits"],i["subject"]) for i in self.subject_data] # [(4.0, 3), (3.33, 4), (4.0, 3.0)]
         self.sub_weight = {i["subject"]:i["credits"] for i in self.subject_data} # {'Math': 3, 'English': 4, 'HISTORY': 3.0}
 
         self.calculate_gpa(self.gp_and_credits)
@@ -345,6 +345,7 @@ class SOLARIS(ctk.CTk):
             delete_btn = ctk.CTkButton(row_frame, text="Delete", width=60,
                         command=lambda row=row_frame, sub=subject_info["subject"]: 
                         self.delete_subject(row, sub))
+            print(subject_info["subject"])
             delete_btn.pack(side="right", padx=20)
 
         # Update initial calculations
@@ -397,7 +398,7 @@ class SOLARIS(ctk.CTk):
 
             # GOAL: MAKE THE DELETE FUNCTION COMPATIBLE TO THE go_and_credits format
             
-            self.gp_and_credits = [(i["gp"],i["credits"]) for i in self.subject_data]
+            self.gp_and_credits = [(i["gp"],i["credits"],i["subject"]) for i in self.subject_data]
             print(self.gp_and_credits)
             
 
@@ -454,7 +455,7 @@ class SOLARIS(ctk.CTk):
     def delete_subject(self, row, subject):
         # Remove the subject from the sub_weight dictionary
         if subject in self.sub_weight:
-            del self.sub_weight[subject]
+            del self.sub_weight[subject]          
 
         # Remove the subject's grade points and credits from gp_and_credits list
         for pair in self.gp_and_credits:
