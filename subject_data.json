@@ -1,10 +1,52 @@
 {
     "subjects": [
         {
-            "subject": "OHNO",
+            "subject": "HISTORY",
+            "grade": "A+",
+            "gp": 4.0,
+            "credits": 4.0
+        },
+        {
+            "subject": "DAMN",
+            "grade": "C",
+            "gp": 2.0,
+            "credits": 2.0
+        },
+        {
+            "subject": "ARC",
+            "grade": "A-",
+            "gp": 3.75,
+            "credits": 2.0
+        },
+        {
+            "subject": "OK",
+            "grade": "A+",
+            "gp": 4.0,
+            "credits": 3.0
+        },
+        {
+            "subject": "TEST2",
+            "grade": "A+",
+            "gp": 4.0,
+            "credits": 3.0
+        },
+        {
+            "subject": "TEST3",
             "grade": "A+",
             "gp": 4.0,
             "credits": 2.0
+        },
+        {
+            "subject": "DAMNN",
+            "grade": "C",
+            "gp": 2.0,
+            "credits": 2.0
+        },
+        {
+            "subject": "WOAH",
+            "grade": "D",
+            "gp": 1.0,
+            "credits": 6.0
         }
     ]
 }

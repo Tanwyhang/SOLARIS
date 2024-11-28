@@ -48,6 +48,15 @@ class SOLARIS(ctk.CTk):
         #key bindings
         self.bind("<Return>", lambda event: self.add_subject_btn.invoke())
 
+        # CHART HOVER VARS
+        # Add these as instance variables
+        self._tooltip_id = None  # Canvas text item ID
+        self._tooltip_x = 0
+        self._tooltip_y = 0
+        self._target_x = 0
+        self._target_y = 0
+        self._animation_active = False
+
         # GPA CALCULATOR DATA INIT
         self.subject_data = self.load_subjects_from_json("subject_data.json")
 
@@ -71,49 +80,158 @@ class SOLARIS(ctk.CTk):
     def draw_pie_chart(self, sub_weight_set):
         self.pie_chart.delete("all")
         
-        # Sample data
         subject_weights = sub_weight_set
-        
         total_credits = sum(subject_weights.values())
         
-        # Draw the pie chart
         canvas_width = self.pie_chart.winfo_width()
         canvas_height = self.pie_chart.winfo_height()
-        # 864 798 as a placeholder first incase of unloaded resolution
         if (canvas_width * canvas_height == 1):
             canvas_width, canvas_height = 850, 600
         
         x = canvas_width // 2
         y = canvas_height // 2
-        radius = min(canvas_width, canvas_height) // 2 - 20  # Subtract some padding
-        start_angle = 0
-
-        colors = ["#8B5FBF", "#6D70D6", "#4F82ED", "#38A0F2", "#32B7E6", "#4BD3C5", "#6FDFAA", "#8DE68D", "#A3EB6D", "#B6DF56", "#C6D047", "#D0BE42", "#D7A842", "#DE8F47", "#E47250"]
-        i = 0
-
-        if len(subject_weights) > 1:
-            for subject, credits in subject_weights.items():
-                end_angle = start_angle + (credits / total_credits) * 360
-                self.pie_chart.create_arc(x - radius, y - radius, x + radius, y + radius, 
-                                        start=start_angle, extent=end_angle - start_angle,
-                                        fill=colors[i % len(colors)],
-                                        outline="")
-                start_angle = end_angle
-                i += 1
-        else:
-            self.pie_chart.create_oval(x - radius, y - radius, x + radius, y + radius, 
-                              fill=colors[0],
-                              outline="")
-        # Draw the legend
-        legend_x = x + radius + 50
-        legend_y = y - radius
+        radius = min(canvas_width, canvas_height) // 2 - 20
         
-        for i, (subject, credits) in enumerate(subject_weights.items()):
-            self.pie_chart.create_rectangle(legend_x, legend_y + i * 30, 
-                                            legend_x + 20, legend_y + i * 30 + 20,
-                                            fill=colors[i % len(colors)], outline="")
-            self.pie_chart.create_text(legend_x - 30 - (3 * len(subject)), legend_y + i * 30 + 10, 
-                               text=f"{subject}", font=("Arial", 12), fill="white")
+        colors = ["#8B5FBF", "#6D70D6", "#4F82ED", "#38A0F2", "#32B7E6", "#4BD3C5", "#6FDFAA", "#8DE68D", "#A3EB6D", "#B6DF56", "#C6D047", "#D0BE42", "#D7A842", "#DE8F47", "#E47250"]
+        
+        # Store arc and legend items for animation
+        self.pie_items = []
+        self.legend_items = []
+        
+        def animate(current_progress):
+            self.pie_chart.delete("all")
+            start_angle = 0
+            
+            if len(subject_weights) > 1:
+                for i, (subject, credits) in enumerate(subject_weights.items()):
+                    # Calculate the animated extent
+                    full_extent = (credits / total_credits) * 360
+                    current_extent = full_extent * current_progress
+                    
+                    # Draw arc with current animation progress
+                    arc = self.pie_chart.create_arc(
+                        x - radius, y - radius, 
+                        x + radius, y + radius,
+                        start=start_angle, 
+                        extent=current_extent,
+                        fill=colors[i % len(colors)],
+                        outline=""
+                    )
+                    
+                    # Add hover effect
+                    self.pie_chart.tag_bind(arc, '<Enter>', 
+                        lambda e, s=subject, c=credits: self.show_tooltip(e, f"{s}: {(c/total_credits)*100:.1f}%"))
+                    self.pie_chart.tag_bind(arc, '<Motion>', self.update_tooltip_position)  # Add this line
+                    self.pie_chart.tag_bind(arc, '<Leave>', self.hide_tooltip)
+                    
+                    start_angle += current_extent
+            else:
+                # Single item case
+                self.pie_chart.create_oval(
+                    x - radius * current_progress, 
+                    y - radius * current_progress, 
+                    x + radius * current_progress, 
+                    y + radius * current_progress,
+                    fill=colors[0],
+                    outline="white",
+                    width=2
+                )
+            
+            # Animate legend with fade-in effect
+            legend_x = x + radius + 50
+            legend_y = y - radius
+            
+            for i, (subject, credits) in enumerate(subject_weights.items()):
+                # Calculate alpha for fade-in effect
+                alpha = int(255 * current_progress)
+                color = self.pie_chart.winfo_rgb(colors[i % len(colors)])
+                
+                # Draw legend items with current opacity
+                self.pie_chart.create_rectangle(
+                    legend_x, legend_y + i * 30,
+                    legend_x + 20, legend_y + i * 30 + 20,
+                    fill=colors[i % len(colors)],
+                    outline="white"
+                )
+                
+                # Add percentage to legend
+                percentage = (credits / total_credits) * 100
+                self.pie_chart.create_text(
+                    legend_x - 60 - (3 * len(subject)), 
+                    legend_y + i * 30 + 10,
+                    text=f"{subject} ({percentage:.1f}%)", 
+                    font=("Arial", 12),
+                    fill=f"#{alpha:02x}{alpha:02x}{alpha:02x}"
+                )
+        
+        # Animation loop
+        def run_animation(step=0):
+            if step <= 80:  # 20 animation frames
+                progress = self.ease_out_cubic(step / 80)
+                animate(progress)
+                self.after(20, lambda: run_animation(step + 1))
+        
+        # Start animation
+        run_animation()
+
+    def ease_out_cubic(self, x):
+        """Cubic easing function for smooth animation"""
+        return 1 - pow(1 - x, 3)
+
+    def show_tooltip(self, event, text):
+        """Show tooltip with smooth following"""
+        self._target_x = event.x + 15
+        self._target_y = event.y - 15
+        
+        # Initialize tooltip if it doesn't exist
+        if not self._tooltip_id:
+            self._tooltip_x = self._target_x
+            self._tooltip_y = self._target_y
+            self._tooltip_id = self.pie_chart.create_text(
+                self._tooltip_x, self._tooltip_y,
+                text=text,
+                fill="white",
+                font=("Arial", 10, "bold"),
+                anchor="w"
+            )
+        else:
+            self.pie_chart.itemconfig(self._tooltip_id, text=text)
+        
+        if not self._animation_active:
+            self._animation_active = True
+            self.animate_tooltip()
+
+    def animate_tooltip(self):
+        """Animate tooltip position with easing"""
+        if self._tooltip_id:
+            # Easing factor (0.1 = smooth, 0.5 = faster)
+            easing = 0.15
+            
+            # Calculate new position with easing
+            dx = self._target_x - self._tooltip_x
+            dy = self._target_y - self._tooltip_y
+            self._tooltip_x += dx * easing
+            self._tooltip_y += dy * easing
+            
+            # Update tooltip position
+            self.pie_chart.coords(self._tooltip_id, self._tooltip_x, self._tooltip_y)
+            
+            # Continue animation if mouse is still over segment
+            if self._animation_active:
+                self.after(16, self.animate_tooltip)  # ~60fps
+
+    def update_tooltip_position(self, event):
+        """Update target position when mouse moves"""
+        if self._tooltip_id:
+            self._target_x = event.x + 15
+            self._target_y = event.y - 15
+
+    def hide_tooltip(self, event):
+        """Hide tooltip and stop animation"""
+        if self._tooltip_id:
+            self.pie_chart.delete(self._tooltip_id)
+            self._tooltip_id = None
+            self._animation_active = False
 
     # GPA CALCULATOR
     def setup_gpa_calculator(self):
@@ -276,8 +394,12 @@ class SOLARIS(ctk.CTk):
 
             # Update gp_and_credits for GPA calculation
             # Remove existing entry if subject exists
-            self.gp_and_credits = [pair for pair in self.gp_and_credits if pair[2] != subject]
-            self.gp_and_credits.append([grade_points, credits, subject])
+
+            # GOAL: MAKE THE DELETE FUNCTION COMPATIBLE TO THE go_and_credits format
+            
+            self.gp_and_credits = [(i["gp"],i["credits"]) for i in self.subject_data]
+            print(self.gp_and_credits)
+            
 
             # Create visual elements
             row_frame = ctk.CTkFrame(self.subjects_scrollable)
@@ -355,9 +477,10 @@ class SOLARIS(ctk.CTk):
         # Redraw the pie chart
         self.draw_pie_chart(self.sub_weight)
     
-    def calculate_gpa(self, gp_and_credits):
+    def calculate_gpa(self, gp_and_credits: list):
         total_points = 0
         total_credits = 0
+        
         
         for pair in gp_and_credits:
             total_points += pair[0] * pair[1]
@@ -366,6 +489,7 @@ class SOLARIS(ctk.CTk):
         if total_credits > 0:
             gpa = total_points / total_credits
             self.gpa_label.configure(text=f"GPA: {gpa:.2f}")
+        print(total_points, total_credits)
     
     # POMODORO TIMER
     def setup_pomodoro_timer(self):
