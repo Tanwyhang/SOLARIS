@@ -1,22 +1,10 @@
 {
     "subjects": [
         {
-            "subject": "Math",
-            "grade": "A",
-            "gp": 4.0,
-            "credits": 3
-        },
-        {
-            "subject": "HISTORY",
+            "subject": "OHNO",
             "grade": "A+",
             "gp": 4.0,
-            "credits": 3.0
-        },
-        {
-            "subject": "SEX",
-            "grade": "A+",
-            "gp": 4.0,
-            "credits": 3.0
+            "credits": 2.0
         }
     ]
 }

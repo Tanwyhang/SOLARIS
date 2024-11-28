@@ -6,6 +6,8 @@ import time
 import math
 import json
 
+
+
 class SOLARIS(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -50,6 +52,7 @@ class SOLARIS(ctk.CTk):
         self.subject_data = self.load_subjects_from_json("subject_data.json")
 
         self.gp_and_credits = []
+        
     
 
     def load_subjects_from_json(self, file_path):
@@ -76,6 +79,10 @@ class SOLARIS(ctk.CTk):
         # Draw the pie chart
         canvas_width = self.pie_chart.winfo_width()
         canvas_height = self.pie_chart.winfo_height()
+        # 864 798 as a placeholder first incase of unloaded resolution
+        if (canvas_width * canvas_height == 1):
+            canvas_width, canvas_height = 850, 600
+        
         x = canvas_width // 2
         y = canvas_height // 2
         radius = min(canvas_width, canvas_height) // 2 - 20  # Subtract some padding
