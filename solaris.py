@@ -7,13 +7,11 @@ import math
 import json
 
 
-
 class SOLARIS(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        # Window Configuration
-        
+        # Window Configuration        
         self.title("SOLARIS - Study & Productivity Hub")
         width = self.winfo_screenwidth()  
         height = self.winfo_screenheight() 
@@ -25,7 +23,6 @@ class SOLARIS(ctk.CTk):
         self.default_font = ctk.CTkFont("Roboto", 14)
         pywinstyles.apply_style(self, "mica") # window 11 theme 
         
-
         # Configure grid
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -33,8 +30,7 @@ class SOLARIS(ctk.CTk):
         # Create Tabview
         self.tabview = ctk.CTkTabview(self)
         self.tabview.grid(row=0, column=0, padx=0, pady=0, sticky="nsew")
-
-        
+ 
         # Create tabs
         self.tabview.add("GPA Calculator")
         self.tabview.add("Pomodoro Timer")
@@ -60,7 +56,7 @@ class SOLARIS(ctk.CTk):
         # GPA CALCULATOR DATA INIT
         self.subject_data = self.load_subjects_from_json("subject_data.json")
 
-        self.gp_and_credits = []
+        self.gp_and_credits = [(i["gp"],i["credits"],i["subject"]) for i in self.subject_data]
         
     
 
@@ -342,10 +338,11 @@ class SOLARIS(ctk.CTk):
                 title_label.pack(pady=2)
             
             # Add delete button
+            #chek
             delete_btn = ctk.CTkButton(row_frame, text="Delete", width=60,
-                        command=lambda row=row_frame, sub=subject_info["subject"]: 
-                        self.delete_subject(row, sub), fg_color="#b34242")
-            print(subject_info["subject"])
+                        command=lambda row=row_frame, 
+                        sub=subject_info["subject"]: self.delete_subject(row, sub), 
+                        fg_color="#b34242")
             delete_btn.pack(side="right", padx=20)
 
         # Update initial calculations
@@ -392,14 +389,7 @@ class SOLARIS(ctk.CTk):
 
             # Update sub_weight for pie chart
             self.sub_weight[subject] = credits
-
-            # Update gp_and_credits for GPA calculation
-            # Remove existing entry if subject exists
-
-            # GOAL: MAKE THE DELETE FUNCTION COMPATIBLE TO THE go_and_credits format
-            
             self.gp_and_credits = [(i["gp"],i["credits"],i["subject"]) for i in self.subject_data]
-            print(self.gp_and_credits)
             
 
             # Create visual elements
@@ -433,8 +423,11 @@ class SOLARIS(ctk.CTk):
                 title_label.pack(pady=2)
             
             # Add delete button
+            # chek
             delete_btn = ctk.CTkButton(row_frame, text="Delete", width=60,
-                        command=lambda row=row_frame, subject=subject: self.delete_subject(row, subject), fg_color="#c45151")
+                        command=lambda row=row_frame, 
+                        subject=subject: self.delete_subject(row, subject), 
+                        fg_color="#c45151")
             delete_btn.pack(side="right", padx=20)
             
             # Clear entries
@@ -490,7 +483,6 @@ class SOLARIS(ctk.CTk):
         if total_credits > 0:
             gpa = total_points / total_credits
             self.gpa_label.configure(text=f"GPA: {gpa:.2f}")
-        print(total_points, total_credits)
     
     # POMODORO TIMER
     def setup_pomodoro_timer(self):

@@ -1,64 +1,28 @@
 {
     "subjects": [
         {
-            "subject": "MALAY",
-            "grade": "B+",
-            "gp": 3.33,
+            "subject": "LING",
+            "grade": "A+",
+            "gp": 4.0,
             "credits": 2.0
         },
         {
-            "subject": "PROGRAM",
-            "grade": "A+",
-            "gp": 4.0,
-            "credits": 10.0
-        },
-        {
-            "subject": "HISTORY",
-            "grade": "A+",
-            "gp": 4.0,
-            "credits": 8.0
-        },
-        {
-            "subject": "ARCHITECTURE",
-            "grade": "A-",
-            "gp": 3.75,
-            "credits": 10.0
-        },
-        {
-            "subject": "CRYPTO",
+            "subject": "GANG",
             "grade": "B",
             "gp": 3.0,
-            "credits": 6.0
-        },
-        {
-            "subject": "GAY",
-            "grade": "A-",
-            "gp": 3.75,
-            "credits": 12.0
-        },
-        {
-            "subject": "CONDOMS",
-            "grade": "F",
-            "gp": 0.0,
-            "credits": 9.0
-        },
-        {
-            "subject": "GAYY",
-            "grade": "A",
-            "gp": 4.0,
             "credits": 10.0
         },
         {
-            "subject": "fuck",
-            "grade": "F",
-            "gp": 0.0,
-            "credits": 5.0
+            "subject": "SCHOOL",
+            "grade": "D",
+            "gp": 1.0,
+            "credits": 7.0
         },
         {
-            "subject": "sdkcisfihefhwehewihofiwoehfhoiwehfoiwehfoiwefh",
-            "grade": "C",
-            "gp": 2.0,
-            "credits": 2.0
+            "subject": "abugq1",
+            "grade": "B+",
+            "gp": 3.33,
+            "credits": 1.0
         }
     ]
 }
