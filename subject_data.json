@@ -31,28 +31,34 @@
             "credits": 6.0
         },
         {
-            "subject": "STATS",
-            "grade": "B+",
-            "gp": 3.33,
-            "credits": 7.0
+            "subject": "GAY",
+            "grade": "A-",
+            "gp": 3.75,
+            "credits": 12.0
         },
         {
-            "subject": "PYTHON",
-            "grade": "B",
-            "gp": 3.0,
+            "subject": "CONDOMS",
+            "grade": "F",
+            "gp": 0.0,
+            "credits": 9.0
+        },
+        {
+            "subject": "GAYY",
+            "grade": "A",
+            "gp": 4.0,
             "credits": 10.0
         },
         {
-            "subject": "DATING",
-            "grade": "A+",
-            "gp": 4.0,
-            "credits": 15.0
+            "subject": "fuck",
+            "grade": "F",
+            "gp": 0.0,
+            "credits": 5.0
         },
         {
-            "subject": "FAP",
-            "grade": "B+",
-            "gp": 3.33,
-            "credits": 12.0
+            "subject": "sdkcisfihefhwehewihofiwoehfhoiwehfoiwehfoiwefh",
+            "grade": "C",
+            "gp": 2.0,
+            "credits": 2.0
         }
     ]
 }

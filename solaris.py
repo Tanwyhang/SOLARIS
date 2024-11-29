@@ -19,11 +19,11 @@ class SOLARIS(ctk.CTk):
         height = self.winfo_screenheight() 
         self.geometry(f"{width}x{height}")
 
-        ctk.set_default_color_theme("blue")
+        ctk.set_default_color_theme("green")
         ctk.set_appearance_mode("dark")
         ctk.set_widget_scaling(1.3)      # Increase the scaling (default is 1.0)
         self.default_font = ctk.CTkFont("Roboto", 14)
-        pywinstyles.apply_style(self, "acrylic") # window 11 theme 
+        pywinstyles.apply_style(self, "mica") # window 11 theme 
         
 
         # Configure grid
@@ -191,7 +191,7 @@ class SOLARIS(ctk.CTk):
                 self._tooltip_x, self._tooltip_y,
                 text=text,
                 fill="white",
-                font=("Arial", 10, "bold"),
+                font=("Arial", 15, "bold"),
                 anchor="w"
             )
         else:
@@ -344,7 +344,7 @@ class SOLARIS(ctk.CTk):
             # Add delete button
             delete_btn = ctk.CTkButton(row_frame, text="Delete", width=60,
                         command=lambda row=row_frame, sub=subject_info["subject"]: 
-                        self.delete_subject(row, sub))
+                        self.delete_subject(row, sub), fg_color="#b34242")
             print(subject_info["subject"])
             delete_btn.pack(side="right", padx=20)
 
@@ -434,7 +434,7 @@ class SOLARIS(ctk.CTk):
             
             # Add delete button
             delete_btn = ctk.CTkButton(row_frame, text="Delete", width=60,
-                        command=lambda row=row_frame, subject=subject: self.delete_subject(row, subject))
+                        command=lambda row=row_frame, subject=subject: self.delete_subject(row, subject), fg_color="#c45151")
             delete_btn.pack(side="right", padx=20)
             
             # Clear entries
