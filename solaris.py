@@ -43,7 +43,7 @@ class SOLARIS(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_widget_scaling(1.3)      # Increase the scaling (default is 1.0)
         self.default_font = ctk.CTkFont("Roboto", 14)
-        pywinstyles.apply_style(self, "acrylic") # window 11 theme 
+        pywinstyles.apply_style(self, "mica") # window 11 theme 
         
         # Configure grid
         self.grid_rowconfigure(0, weight=1)

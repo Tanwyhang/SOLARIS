@@ -35,7 +35,8 @@
             "date_created": "2024-03-02",
             "deadline": "2024-03-20",
             "remarks": "Include new API endpoints",
-            "complete": false
+            "complete": true,
+            "completion_date": "2024-12-04"
         },
         {
             "name": "Client Meeting Preparation",
