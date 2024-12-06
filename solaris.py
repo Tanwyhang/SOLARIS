@@ -508,124 +508,377 @@ class SOLARIS(ctk.CTk):
     def setup_pomodoro_timer(self):
         tab = self.tabview.tab("Pomodoro Timer")
         
+        # Initialize pomodoro variables
+        self.pomodoro_time_left = 25 * 60  # 25 minutes in seconds
+        self.pomodoro_timer_running = False
+        self.pomodoro_session_type = "Study"
+        self.pomodoro_count = 0
+        
+        self.pomodoro_settings = {
+            "work_duration": 25,
+            "short_break": 5,
+            "long_break": 15
+        }
+        
+        # Animation variables
+        self.animation_circles = []
+        self.animation_angle = 0
+        self.animation_running = False
+        
+        # Create main container with split view
+        self.pomodoro_container = ctk.CTkFrame(tab)
+        self.pomodoro_container.pack(expand=True, fill="both", padx=100, pady=10)
+        self.pomodoro_container.grid_rowconfigure(0, weight=1)
+        self.pomodoro_container.grid_columnconfigure(0, weight=2)  # Left side larger
+        self.pomodoro_container.grid_columnconfigure(1, weight=1)  # Right side smaller
+        
+        # Setup left frame (timer and animation)
+        self.setup_pomodoro_left_frame()
+        
+        # Setup right frame (history)
+        self.setup_pomodoro_right_frame()
+        
+        # Start animation loop
+        self.start_pomodoro_animation()
+        
+        # Load session history
+        self.load_pomodoro_history()
+    
+    def setup_pomodoro_left_frame(self):
+        # Left frame for timer and controls
+        self.pomodoro_left_frame = ctk.CTkFrame(self.pomodoro_container)
+        self.pomodoro_left_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        
+        # Canvas for animation
+        self.pomodoro_canvas = ctk.CTkCanvas(self.pomodoro_left_frame, 
+                                    bg="#363636", 
+                                    highlightthickness=0)
+        self.pomodoro_canvas.pack(expand=True, fill="both", padx=20, pady=20)
+        
         # Timer display
-        self.timer_label = ctk.CTkLabel(tab, text="25:00", 
-                                    font=ctk.CTkFont(size=48, weight="bold"))
-        self.timer_label
-        self.timer_label.pack(pady=20)
+        self.timer_label = ctk.CTkLabel(
+            self.pomodoro_canvas, 
+            text="25:00",
+            font=ctk.CTkFont(size=48, weight="bold"),
+            bg_color="transparent",
+            fg_color="transparent"
+        )
+        self.timer_label.place(relx=0.5, rely=0.5, anchor="center")
         
-        # Status display
-        self.status_label = ctk.CTkLabel(tab, text="Ready to Start", 
-                                    font=ctk.CTkFont(size=16))
-        self.status_label.pack(pady=5)
-        
-        # Pomodoro counter
-        self.pomodoro_counter_label = ctk.CTkLabel(tab, 
-                                                text="Pomodoros Completed: 0/4",
-                                                font=ctk.CTkFont(size=14))
-        self.pomodoro_counter_label.pack(pady=5)
+        # Session status
+        self.pomodoro_status_label = ctk.CTkLabel(
+            self.pomodoro_canvas,
+            text="Work Session 1 of 4",
+            font=ctk.CTkFont(size=16)
+        )
+        self.pomodoro_status_label.place(relx=0.5, rely=0.5, anchor="center")
         
         # Control buttons
-        btn_frame = ctk.CTkFrame(tab)
-        btn_frame.pack(pady=20)
+        controls_frame = ctk.CTkFrame(self.pomodoro_left_frame, fg_color="transparent")
+        controls_frame.pack(pady=20)
         
-        self.start_btn = ctk.CTkButton(btn_frame, text="Start", 
-                                    command=self.start_pomodoro)
-        self.start_btn.pack(side="left", padx=10)
+        self.start_btn = ctk.CTkButton(
+            controls_frame, 
+            text="Start",
+            command=self.toggle_pomodoro_timer
+        )
+        self.start_btn.pack(side="left", padx=5)
         
-        self.reset_btn = ctk.CTkButton(btn_frame, text="Reset", 
-                                    command=self.reset_pomodoro)
-        self.reset_btn.pack(side="left", padx=10)
+        self.finish_btn = ctk.CTkButton(
+            controls_frame, 
+            text="Finish",
+            command=self.finish_pomodoro_session
+        )
+        self.finish_btn.pack(side="left", padx=5)
         
-        self.finish_btn = ctk.CTkButton(btn_frame, text="Finish", 
-                                    command=self.finish_current_session)
-        self.finish_btn.pack(side="left", padx=10)
+        self.settings_btn = ctk.CTkButton(
+            controls_frame,
+            text="Settings",
+            command=self.show_pomodoro_settings
+        )
+        self.settings_btn.pack(side="left", padx=5)
         
-        # Timer variables
-        self.pomodoro_count = 0
-        self.time_left = 25 * 60  # 25 minutes in seconds
-        self.timer_running = False
-        self.is_break = False
-        self.is_long_break = False
+        # Bind resize event
+        self.pomodoro_canvas.bind('<Configure>', self.on_pomodoro_resize)
+
+    def start_pomodoro_animation(self):
+        if not hasattr(self, 'pomodoro_canvas'):
+            return
+            
+        center_x = self.pomodoro_canvas.winfo_width() / 2
+        center_y = self.pomodoro_canvas.winfo_height() / 2 * 0.88
+        radius = 200
+        
+        # Clear previous circles
+        self.pomodoro_canvas.delete("circle")
+        
+        # Draw circles with cubic speed variation
+        num_circles = 8
+        phase_delay = 0.2  # Controls spacing between circles
+        
+        for i in range(num_circles):
+            # Calculate base angle with phase delay
+            delayed_angle = self.animation_angle - (i * phase_delay)
+            
+            # Apply cubic speed variation (t³ - t)
+            t = (math.sin(delayed_angle) + 1) / 2  # Normalize to 0-1
+            speed_variation = t * t * t - t  # Cubic function
+            current_angle = delayed_angle * 2 + speed_variation * 2
+            
+            # Calculate position with cubic influence
+            x = center_x + radius * math.cos(current_angle)
+            y = center_y + radius * math.sin(current_angle)
+            
+            # Calculate opacity using cubic function
+            t_opacity = (math.sin(delayed_angle * 2) + 1) / 2
+            opacity = int(255 * (0.4 + 0.6 * (t_opacity * t_opacity * t_opacity)))
+            opacity_hex = format(opacity, '02x')
+            
+            # Calculate size using cubic function
+            base_size = 10 * (1.2 - 0.1 * i)
+            size_factor = t * t * t
+            size = base_size * (0.8 + 0.4 * size_factor)
+            
+            # Draw circle
+            self.pomodoro_canvas.create_oval(
+                x - size, y - size,
+                x + size, y + size,
+                fill=f"#{opacity_hex}{opacity_hex}{opacity_hex}",
+                outline="",
+                tags="circle"
+            )
+        
+        # Update animation angle with cubic speed variation
+        t = (math.sin(self.animation_angle * 2) + 1) / 2
+        speed = 0.03 + 0.04 * (t * t * t)  # Base speed plus cubic variation
+        self.animation_angle += speed
+        
+        # Continue animation
+        self.animation_running = True
+        self.pomodoro_canvas.after(16, self.start_pomodoro_animation)
+
+    def on_pomodoro_resize(self, event):
+        # Get current canvas center
+        center_x = event.width / 2
+        center_y = event.height / 2
+        
+        # Adjust position history to new center
+        if hasattr(self, 'position_history'):
+            old_center_x = self.pomodoro_canvas.winfo_width() / 2
+            old_center_y = self.pomodoro_canvas.winfo_height() / 2
+            
+            # Calculate offset
+            offset_x = center_x - old_center_x
+            offset_y = center_y - old_center_y
+            
+            # Update all positions in history
+            self.position_history = [
+                (x + offset_x, y + offset_y)
+                for x, y in self.position_history
+            ]
+        
+        # Update timer label positions
+        self.timer_label.place(relx=0.5, rely=0.4, anchor="center")
+        self.pomodoro_status_label.place(relx=0.5, rely=0.5, anchor="center")
     
-    def start_pomodoro(self):
-        if not self.timer_running:
-            self.timer_running = True
-            self.update_timer()
+    def setup_pomodoro_right_frame(self):
+        # Right frame for session history
+        self.pomodoro_right_frame = ctk.CTkFrame(self.pomodoro_container)
+        self.pomodoro_right_frame.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+        
+        # History label
+        history_label = ctk.CTkLabel(
+            self.pomodoro_right_frame, 
+            text="Session History",
+            font=ctk.CTkFont(size=20, weight="bold")
+        )
+        history_label.pack(pady=10)
+        
+        # Scrollable frame for history
+        self.history_frame = ctk.CTkScrollableFrame(self.pomodoro_right_frame)
+        self.history_frame.pack(expand=True, fill="both", padx=10, pady=10)
+    
+    def toggle_pomodoro_timer(self):
+        self.pomodoro_timer_running = not self.pomodoro_timer_running
+        if self.pomodoro_timer_running:
             self.start_btn.configure(text="Pause")
+            if self.pomodoro_session_type == "work":
+                self.add_pomodoro_session_to_history()
+            self.update_pomodoro_timer()
         else:
-            self.timer_running = False
             self.start_btn.configure(text="Resume")
 
-    def update_timer(self):
-        if self.timer_running and self.time_left > 0:
-            minutes = self.time_left // 60
-            seconds = self.time_left % 60
-            self.timer_label.configure(text=f"{minutes:02d}:{seconds:02d}")
-            self.time_left -= 1
-            self.after(1000, self.update_timer)
-        elif self.time_left <= 0:
-            self.timer_running = False
-            self.start_btn.configure(text="Start")
-            self.handle_session_complete()
+    def update_pomodoro_timer(self):
+        if self.pomodoro_timer_running and self.pomodoro_time_left > 0:
+            mins, secs = divmod(self.pomodoro_time_left, 60)
+            self.timer_label.configure(text=f"{mins:02d}:{secs:02d}")
+            self.pomodoro_time_left -= 1
+            self.after(1000, self.update_pomodoro_timer)
+        elif self.pomodoro_time_left <= 0:
+            self.handle_pomodoro_complete()
 
-    def handle_session_complete(self):
-        if not self.is_break:
-            # Completed a Pomodoro
-            self.pomodoro_count += 1
-            self.pomodoro_counter_label.configure(
-                text=f"Pomodoros Completed: {self.pomodoro_count}/4"
-            )
-            
-            if self.pomodoro_count % 4 == 0:
-                # Time for a long break
-                self.time_left = 30 * 60  # 30 minutes
-                self.is_break = True
-                self.is_long_break = True
-                self.status_label.configure(text="Long Break - Time to recharge!")
-                messagebox.showinfo("Pomodoro", 
-                                "Great job! Time for a 30-minute break!")
-                self.timer_label.configure(text="30:00")
-            else:
-                # Time for a short break
-                
-                self.time_left = 5 * 60  # 5 minutes
-                self.is_break = True
-                self.is_long_break = False
-                self.status_label.configure(text="Short Break - Take 5!")
-                messagebox.showinfo("Pomodoro", 
-                                "Good work! Time for a 5-minute break!")
-                self.timer_label.configure(text="05:00")
-        else:
-            # Break is over, start new Pomodoro
-            self.time_left = 25 * 60
-            self.is_break = False
-            self.is_long_break = False
-            self.status_label.configure(text="Focus Time!")
-            messagebox.showinfo("Pomodoro", "Break's over! Ready for the next focus session?")
-            self.timer_label.configure(text="25:00")
-
-    def reset_pomodoro(self):
-        self.timer_running = False
-        self.time_left = 25 * 60
-        self.is_break = False
-        self.is_long_break = False
-        self.pomodoro_count = 0
-        self.timer_label.configure(text="25:00")
+    def handle_pomodoro_complete(self):
+        self.pomodoro_timer_running = False
         self.start_btn.configure(text="Start")
-        self.status_label.configure(text="Ready to Start")
-        self.pomodoro_counter_label.configure(text="Pomodoros Completed: 0/4")
-
-    def finish_current_session(self):
-        if messagebox.askyesno("Finish Session", 
-                            "Are you sure you want to finish the current session?"):
-            self.time_left = 0
-            self.timer_running = False
-            self.handle_session_complete()
-
-            # show break time
-            self.start_btn.configure(text="Start")
         
+        if self.pomodoro_session_type == "work":
+            self.pomodoro_count += 1
+            if self.pomodoro_count % 4 == 0:
+                self.pomodoro_session_type = "long_break"
+                self.pomodoro_time_left = self.pomodoro_settings["long_break"] * 60
+                messagebox.showinfo("Break Time", "Time for a long break!")
+            else:
+                self.pomodoro_session_type = "short_break"
+                self.pomodoro_time_left = self.pomodoro_settings["short_break"] * 60
+                messagebox.showinfo("Break Time", "Time for a short break!")
+        else:
+            self.pomodoro_session_type = "work"
+            self.pomodoro_time_left = self.pomodoro_settings["work_duration"] * 60
+            messagebox.showinfo("Work Time", "Break's over! Time to focus!")
+        
+        self.update_pomodoro_status()
+
+    def finish_pomodoro_session(self):
+        if messagebox.askyesno("Finish Session", 
+                             "Are you sure you want to finish this session?"):
+            self.pomodoro_time_left = 0
+            self.handle_pomodoro_complete()
+
+    def show_pomodoro_settings(self):
+        settings_window = ctk.CTkToplevel(self)
+        settings_window.title("Timer Settings")
+        settings_window.geometry("300x200")
+        settings_window.grab_set()  # Make window modal
+        
+        # Work duration setting
+        ctk.CTkLabel(settings_window, 
+                    text="Work Duration (minutes):").pack(pady=5)
+        work_entry = ctk.CTkEntry(settings_window)
+        work_entry.insert(0, str(self.pomodoro_settings["work_duration"]))
+        work_entry.pack()
+        
+        # Short break setting
+        ctk.CTkLabel(settings_window, 
+                    text="Short Break (minutes):").pack(pady=5)
+        short_break_entry = ctk.CTkEntry(settings_window)
+        short_break_entry.insert(0, str(self.pomodoro_settings["short_break"]))
+        short_break_entry.pack()
+        
+        # Long break setting
+        ctk.CTkLabel(settings_window, 
+                    text="Long Break (minutes):").pack(pady=5)
+        long_break_entry = ctk.CTkEntry(settings_window)
+        long_break_entry.insert(0, str(self.pomodoro_settings["long_break"]))
+        long_break_entry.pack()
+        
+        def save_settings():
+            try:
+                self.pomodoro_settings["work_duration"] = int(work_entry.get())
+                self.pomodoro_settings["short_break"] = int(short_break_entry.get())
+                self.pomodoro_settings["long_break"] = int(long_break_entry.get())
+                self.save_pomodoro_settings()
+                settings_window.destroy()
+            except ValueError:
+                messagebox.showerror("Error", "Please enter valid numbers")
+        
+        save_btn = ctk.CTkButton(settings_window, text="Save", 
+                                command=save_settings)
+        save_btn.pack(pady=20)
+
+    def update_pomodoro_status(self):
+        if self.pomodoro_session_type == "work":
+            current_session = (self.pomodoro_count % 4) + 1
+            self.pomodoro_status_label.configure(
+                text=f"Work Session {current_session} of 4")
+        elif self.pomodoro_session_type == "short_break":
+            self.pomodoro_status_label.configure(text="Short Break")
+        else:
+            self.pomodoro_status_label.configure(text="Long Break")
+
+    def on_pomodoro_resize(self, event):
+        # Update circle positions when canvas is resized
+        center_x = event.width / 2
+        center_y = event.height / 2
+        for i, circle in enumerate(self.animation_circles):
+            angle = (i * math.pi / 3)
+            circle['x'] = center_x + 120 * math.cos(angle)
+            circle['y'] = center_y + 120 * math.sin(angle)
+        
+        # Update label positions
+        self.timer_label.place(relx=0.5, rely=0.4, anchor="center")
+        self.pomodoro_status_label.place(relx=0.5, rely=0.5, anchor="center")
+    
+    def add_pomodoro_session_to_history(self):
+        session = {
+            "start_time": datetime.now().strftime("%I:%M %p"),
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "type": self.pomodoro_session_type
+        }
+        
+        # Create session display
+        self.display_pomodoro_session(session)
+        self.save_pomodoro_session(session)
+
+    def load_pomodoro_history(self):
+        try:
+            with open("pomodoro_history.json", "r") as f:
+                sessions = json.load(f)
+                for session in sessions[-10:]:  # Show only last 10 sessions
+                    self.display_pomodoro_session(session)
+        except FileNotFoundError:
+            pass
+
+    def save_pomodoro_session(self, session):
+        try:
+            with open("pomodoro_history.json", "r") as f:
+                sessions = json.load(f)
+        except FileNotFoundError:
+            sessions = []
+        
+        sessions.append(session)
+        
+        with open("pomodoro_history.json", "w") as f:
+            json.dump(sessions, f, indent=4)
+
+    def save_pomodoro_settings(self):
+        with open("pomodoro_settings.json", "w") as f:
+            json.dump(self.pomodoro_settings, f, indent=4)
+
+    def display_pomodoro_session(self, session):
+        session_frame = ctk.CTkFrame(self.history_frame)
+        session_frame.pack(fill="x", pady=5, padx=5)
+        
+        # Session info with icons
+        time_label = ctk.CTkLabel(
+            session_frame,
+            text=f"🕒 {session['date']} - {session['start_time']}",
+            font=ctk.CTkFont(size=14)
+        )
+        time_label.pack(anchor="w", padx=10, pady=(5,0))
+        
+        type_label = ctk.CTkLabel(
+            session_frame,
+            text=f"📌 {session['type'].replace('_', ' ').title()}",
+            font=ctk.CTkFont(size=12)
+        )
+        type_label.pack(anchor="w", padx=10, pady=(0,5))
+        
+        # Add separator line
+        separator = ctk.CTkFrame(session_frame, height=1)
+        separator.pack(fill="x", padx=5)
+
+
+
+
+
+
+
+
+
+
+
+
+
     # TO-DO LIST
     def setup_todo_list(self):
         tab = self.tabview.tab("To-Do List")
