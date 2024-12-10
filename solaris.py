@@ -43,32 +43,67 @@ class SOLARIS(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_widget_scaling(1.3)      # Increase the scaling (default is 1.0)
         self.default_font = ctk.CTkFont("Roboto", 14)
-        pywinstyles.apply_style(self, "mica") # window 11 theme 
+        pywinstyles.apply_style(self, "acrylic") # window 11 theme 
+
+        # Show splash screen first
+        self.show_splash_screen()
+        # Schedule the main UI setup after splash screen
+        self.after(2000, self.setup_main_ui)
+
+    def show_splash_screen(self):
+        # Create splash screen frame
+        self.splash_frame = ctk.CTkFrame(self)
+        self.splash_frame.pack(fill="both", expand=True)
+            
+        # Configure grid for centering
+        self.splash_frame.grid_rowconfigure(0, weight=1)
+        self.splash_frame.grid_rowconfigure(2, weight=1)
+        self.splash_frame.grid_columnconfigure(0, weight=1)
+            
+        # Add SOLARIS text
+        solaris_label = ctk.CTkLabel(
+            self.splash_frame,
+            text="SOLARIS",
+            font=("Roboto", 48, "bold")
+        )
+        solaris_label.grid(row=1, column=0, pady=(0, 20))
+            
+        # Add "powered by" text
+        powered_by_label = ctk.CTkLabel(
+            self.splash_frame,
+            text="powered by Wy",
+            font=("Roboto", 24)
+        )
+        powered_by_label.grid(row=2, column=0)
         
+    def setup_main_ui(self):
+        # Remove splash screen
+        self.splash_frame.destroy()
+            
         # Configure grid
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        
+            
         # Create Tabview
         self.tabview = ctk.CTkTabview(self)
         self.tabview.grid(row=0, column=0, padx=0, pady=0, sticky="nsew")
- 
+    
         # Create tabs
         self.tabview.add("GPA Calculator")
         self.tabview.add("Pomodoro Timer")
         self.tabview.add("To-Do List")
-        
+            
         # Initialize components
         self.setup_gpa_calculator()
         self.setup_pomodoro_timer()
         self.setup_todo_list()
 
-        #key bindings
-        # self.bind("<Return>", lambda event: self.add_subject_btn.invoke())
-
+        # GPA CALCULATOR DATA INIT
+        self.subject_data = self.load_subjects_from_json("subject_data.json")
+        self.gp_and_credits = [(i["gp"],i["credits"],i["subject"]) for i in self.subject_data]
+            
         # CHART HOVER VARS
-        # Add these as instance variables
-        self._tooltip_id = None  # Canvas text item ID
+        self._tooltip_id = None
         self._tooltip_x = 0
         self._tooltip_y = 0
         self._target_x = 0
@@ -77,7 +112,6 @@ class SOLARIS(ctk.CTk):
 
         # GPA CALCULATOR DATA INIT
         self.subject_data = self.load_subjects_from_json("subject_data.json")
-
         self.gp_and_credits = [(i["gp"],i["credits"],i["subject"]) for i in self.subject_data]
         
     
