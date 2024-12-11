@@ -43,7 +43,7 @@ class SOLARIS(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_widget_scaling(1.3)      # Increase the scaling (default is 1.0)
         self.default_font = ctk.CTkFont("Roboto", 14)
-        pywinstyles.apply_style(self, "acrylic") # window 11 theme 
+        pywinstyles.apply_style(self, "mica") # window 11 theme 
 
         # Show splash screen first
         self.show_splash_screen()
@@ -545,7 +545,7 @@ class SOLARIS(ctk.CTk):
         # Initialize pomodoro variables
         self.pomodoro_time_left = 25 * 60  # 25 minutes in seconds
         self.pomodoro_timer_running = False
-        self.pomodoro_session_type = "Study"
+        self.pomodoro_session_type = "work"
         self.pomodoro_count = 0
         
         self.pomodoro_settings = {
@@ -565,6 +565,11 @@ class SOLARIS(ctk.CTk):
         self.pomodoro_container.grid_rowconfigure(0, weight=1)
         self.pomodoro_container.grid_columnconfigure(0, weight=2)  # Left side larger
         self.pomodoro_container.grid_columnconfigure(1, weight=1)  # Right side smaller
+
+        # circles color setup (POMODORO TIMER)
+        self.current_color = {"r": 128, "g": 128, "b": 128}  # Start with gray
+        self.target_color = {"r": 128, "g": 128, "b": 128}   # Target color (will change on start)
+        self.color_transition_progress = 1.0  # Progress of color transition (0.0 to 1.0)
         
         # Setup left frame (timer and animation)
         self.setup_pomodoro_left_frame()
@@ -642,6 +647,17 @@ class SOLARIS(ctk.CTk):
         center_x = self.pomodoro_canvas.winfo_width() / 2
         center_y = self.pomodoro_canvas.winfo_height() / 2 * 0.88
         radius = 200
+
+        # Update color transition
+        if self.color_transition_progress < 1.0:
+            self.color_transition_progress = min(1.0, self.color_transition_progress + 0.02)
+            
+            # Interpolate between current and target colors
+            for channel in ['r', 'g', 'b']:
+                self.current_color[channel] = int(
+                    self.current_color[channel] * (1 - self.color_transition_progress) +
+                    self.target_color[channel] * self.color_transition_progress
+                )
         
         # Clear previous circles
         self.pomodoro_canvas.delete("circle")
@@ -649,6 +665,8 @@ class SOLARIS(ctk.CTk):
         # Draw circles with cubic speed variation
         num_circles = 8
         phase_delay = 0.2  # Controls spacing between circles
+        # Adjust animation speed based on timer state
+        speed_multiplier = 1.0 if self.pomodoro_timer_running else 0.1
         
         for i in range(num_circles):
             # Calculate base angle with phase delay
@@ -663,10 +681,16 @@ class SOLARIS(ctk.CTk):
             x = center_x + radius * math.cos(current_angle)
             y = center_y + radius * math.sin(current_angle)
             
-            # Calculate opacity using cubic function
+            # Calculate opacity using cubic function with minimum 35%
             t_opacity = (math.sin(delayed_angle * 2) + 1) / 2
-            opacity = int(255 * (0.4 + 0.6 * (t_opacity * t_opacity * t_opacity)))
-            opacity_hex = format(opacity, '02x')
+            opacity = int(255 * max(0.4, 0.3 + 0.7 * (t_opacity * t_opacity * t_opacity))) if self.pomodoro_timer_running else int(255 * max(0.4, 0.2 + 0.65 * (t_opacity * t_opacity * t_opacity)))
+            
+            # Create color with current RGB values and opacity
+            color = "#{:02x}{:02x}{:02x}".format(
+                int(self.current_color['r'] * opacity / 255),
+                int(self.current_color['g'] * opacity / 255),
+                int(self.current_color['b'] * opacity / 255)
+            )
             
             # Calculate size using cubic function
             base_size = 10 * (1.2 - 0.1 * i)
@@ -677,14 +701,14 @@ class SOLARIS(ctk.CTk):
             self.pomodoro_canvas.create_oval(
                 x - size, y - size,
                 x + size, y + size,
-                fill=f"#{opacity_hex}{opacity_hex}{opacity_hex}",
+                fill=color,
                 outline="",
                 tags="circle"
             )
         
         # Update animation angle with cubic speed variation
         t = (math.sin(self.animation_angle * 2) + 1) / 2
-        speed = 0.03 + 0.04 * (t * t * t)  # Base speed plus cubic variation
+        speed = (0.03 + 0.04 * (t * t * t)) * speed_multiplier  # Base speed plus cubic variation
         self.animation_angle += speed
         
         # Continue animation
@@ -735,11 +759,17 @@ class SOLARIS(ctk.CTk):
     def toggle_pomodoro_timer(self):
         self.pomodoro_timer_running = not self.pomodoro_timer_running
         if self.pomodoro_timer_running:
+            self.target_color = {"r": 191, "g": 242, "b": 245}  # Dodger blue
+            self.color_transition_progress = 0.0  # Start transition
             self.start_btn.configure(text="Pause")
             if self.pomodoro_session_type == "work":
                 self.add_pomodoro_session_to_history()
             self.update_pomodoro_timer()
         else:
+            # if not runnning
+            self.target_color = {"r": 128, "g": 128, "b": 128}  # Dodger blue
+            self.color_transition_progress = 0.0  # Start transition
+            # Set target color to blue when starting
             self.start_btn.configure(text="Resume")
 
     def update_pomodoro_timer(self):
@@ -760,14 +790,20 @@ class SOLARIS(ctk.CTk):
             if self.pomodoro_count % 4 == 0:
                 self.pomodoro_session_type = "long_break"
                 self.pomodoro_time_left = self.pomodoro_settings["long_break"] * 60
+                mins, secs = divmod(self.pomodoro_time_left, 60)
+                self.timer_label.configure(text=f"{mins:02d}:{secs:02d}")
                 messagebox.showinfo("Break Time", "Time for a long break!")
             else:
                 self.pomodoro_session_type = "short_break"
                 self.pomodoro_time_left = self.pomodoro_settings["short_break"] * 60
+                mins, secs = divmod(self.pomodoro_time_left, 60)
+                self.timer_label.configure(text=f"{mins:02d}:{secs:02d}")
                 messagebox.showinfo("Break Time", "Time for a short break!")
         else:
             self.pomodoro_session_type = "work"
             self.pomodoro_time_left = self.pomodoro_settings["work_duration"] * 60
+            mins, secs = divmod(self.pomodoro_time_left, 60)
+            self.timer_label.configure(text=f"{mins:02d}:{secs:02d}")
             messagebox.showinfo("Work Time", "Break's over! Time to focus!")
         
         self.update_pomodoro_status()
@@ -820,6 +856,8 @@ class SOLARIS(ctk.CTk):
         save_btn.pack(pady=20)
 
     def update_pomodoro_status(self):
+        self.target_color = {"r": 128, "g": 128, "b": 128}
+        self.color_transition_progress = 0
         if self.pomodoro_session_type == "work":
             current_session = (self.pomodoro_count % 4) + 1
             self.pomodoro_status_label.configure(
