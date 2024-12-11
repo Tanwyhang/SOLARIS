@@ -30,6 +30,10 @@ class SOLARIS(ctk.CTk):
             "green": {
                 "main": "#2c8a6e",    # Green - for positive actions
                 "hover": "#26755d"    # Darker green for hover
+            },
+            "purple": {
+                "main": "#9679b0",
+                "hover": "#765f8a"
             }
         }
 
@@ -39,7 +43,7 @@ class SOLARIS(ctk.CTk):
         height = self.winfo_screenheight() 
         self.geometry(f"{width}x{height}")
 
-        ctk.set_default_color_theme("green")
+        ctk.set_default_color_theme("blue")
         ctk.set_appearance_mode("dark")
         ctk.set_widget_scaling(1.3)      # Increase the scaling (default is 1.0)
         self.default_font = ctk.CTkFont("Roboto", 14)
@@ -316,7 +320,7 @@ class SOLARIS(ctk.CTk):
         
         # Add subject button
         self.add_subject_btn = ctk.CTkButton(input_frame, text="Add Subject", 
-                                           command=self.add_subject)
+                                           command=self.add_subject, fg_color=self.COLORS["blue"]["main"], hover_color=self.COLORS["blue"]["hover"])
         self.add_subject_btn.pack(side="left", padx=10)
 
         # Frame for subject (left) and chart (right)
@@ -619,6 +623,8 @@ class SOLARIS(ctk.CTk):
         self.start_btn = ctk.CTkButton(
             controls_frame, 
             text="Start",
+            fg_color=self.COLORS["purple"]["main"],
+            hover_color=self.COLORS["purple"]["hover"],
             command=self.toggle_pomodoro_timer
         )
         self.start_btn.pack(side="left", padx=5)
@@ -626,6 +632,8 @@ class SOLARIS(ctk.CTk):
         self.finish_btn = ctk.CTkButton(
             controls_frame, 
             text="Finish",
+            fg_color=self.COLORS["blue"]["main"],
+            hover_color=self.COLORS["blue"]["hover"],
             command=self.finish_pomodoro_session
         )
         self.finish_btn.pack(side="left", padx=5)
@@ -633,6 +641,8 @@ class SOLARIS(ctk.CTk):
         self.settings_btn = ctk.CTkButton(
             controls_frame,
             text="Settings",
+            fg_color=self.COLORS["blue"]["main"],
+            hover_color=self.COLORS["blue"]["hover"],
             command=self.show_pomodoro_settings
         )
         self.settings_btn.pack(side="left", padx=5)
@@ -766,7 +776,7 @@ class SOLARIS(ctk.CTk):
                 self.add_pomodoro_session_to_history()
             self.update_pomodoro_timer()
         else:
-            # if not runnning
+            # if not runnningre
             self.target_color = {"r": 128, "g": 128, "b": 128}  # Dodger blue
             self.color_transition_progress = 0.0  # Start transition
             # Set target color to blue when starting
@@ -815,45 +825,92 @@ class SOLARIS(ctk.CTk):
             self.handle_pomodoro_complete()
 
     def show_pomodoro_settings(self):
+        
         settings_window = ctk.CTkToplevel(self)
         settings_window.title("Timer Settings")
-        settings_window.geometry("300x200")
+        settings_window.geometry("400x400")  # Made window slightly larger
+        settings_window.resizable(False, False)
         settings_window.grab_set()  # Make window modal
         
         # Work duration setting
-        ctk.CTkLabel(settings_window, 
-                    text="Work Duration (minutes):").pack(pady=5)
-        work_entry = ctk.CTkEntry(settings_window)
-        work_entry.insert(0, str(self.pomodoro_settings["work_duration"]))
-        work_entry.pack()
+        work_label = ctk.CTkLabel(settings_window, text=f"Work Duration: {self.pomodoro_settings['work_duration']} minutes")
+        work_label.pack(pady=(20,5))
+        work_slider = ctk.CTkSlider(settings_window,
+                                from_=1,
+                                to=60,
+                                number_of_steps=59,
+                                width=300,
+                                command=lambda value: work_label.configure(
+                                    text=f"Work Duration: {int(value)} minutes"))
+        work_slider.set(self.pomodoro_settings["work_duration"])
+        work_slider.pack(padx=20)
         
         # Short break setting
-        ctk.CTkLabel(settings_window, 
-                    text="Short Break (minutes):").pack(pady=5)
-        short_break_entry = ctk.CTkEntry(settings_window)
-        short_break_entry.insert(0, str(self.pomodoro_settings["short_break"]))
-        short_break_entry.pack()
+        short_break_label = ctk.CTkLabel(settings_window, text=f"Short Break: {self.pomodoro_settings['short_break']} minutes")
+        short_break_label.pack(pady=(20,5))
+        short_break_slider = ctk.CTkSlider(settings_window,
+                                        from_=1,
+                                        to=30,
+                                        number_of_steps=29,
+                                        width=300,
+                                        command=lambda value: short_break_label.configure(
+                                            text=f"Short Break: {int(value)} minutes"))
+        short_break_slider.set(self.pomodoro_settings["short_break"])
+        short_break_slider.pack(padx=20)
         
         # Long break setting
-        ctk.CTkLabel(settings_window, 
-                    text="Long Break (minutes):").pack(pady=5)
-        long_break_entry = ctk.CTkEntry(settings_window)
-        long_break_entry.insert(0, str(self.pomodoro_settings["long_break"]))
-        long_break_entry.pack()
+        long_break_label = ctk.CTkLabel(settings_window, text=f"Long Break: {self.pomodoro_settings['long_break']} minutes")
+        long_break_label.pack(pady=(20,5))
+        long_break_slider = ctk.CTkSlider(settings_window,
+                                        from_=5,
+                                        to=60,
+                                        number_of_steps=55,
+                                        width=300,
+                                        command=lambda value: long_break_label.configure(
+                                            text=f"Long Break: {int(value)} minutes"))
+        long_break_slider.set(self.pomodoro_settings["long_break"])
+        long_break_slider.pack(padx=20)
         
         def save_settings():
-            try:
-                self.pomodoro_settings["work_duration"] = int(work_entry.get())
-                self.pomodoro_settings["short_break"] = int(short_break_entry.get())
-                self.pomodoro_settings["long_break"] = int(long_break_entry.get())
-                self.save_pomodoro_settings()
-                settings_window.destroy()
-            except ValueError:
-                messagebox.showerror("Error", "Please enter valid numbers")
+            # Update settings dictionary
+            self.pomodoro_settings["work_duration"] = int(work_slider.get())
+            self.pomodoro_settings["short_break"] = int(short_break_slider.get())
+            self.pomodoro_settings["long_break"] = int(long_break_slider.get())
+            
+            # Save to file
+            with open("pomodoro_settings.json", "w") as f:
+                json.dump(self.pomodoro_settings, f, indent=4)
+            
+            # If timer is running, stop it and reset with new duration
+            if self.pomodoro_timer_running:
+                self.pomodoro_timer_running = False
+                self.start_btn.configure(text="Start")
+            
+            # Reset time based on current session type
+            if self.pomodoro_session_type == "work":
+                self.pomodoro_time_left = self.pomodoro_settings["work_duration"] * 60
+            elif self.pomodoro_session_type == "short_break":
+                self.pomodoro_time_left = self.pomodoro_settings["short_break"] * 60
+            else:  # Long Break
+                self.pomodoro_time_left = self.pomodoro_settings["long_break"] * 60
+            
+            # Update timer display
+            minutes = self.pomodoro_time_left // 60
+            seconds = self.pomodoro_time_left % 60
+            self.timer_label.configure(text=f"{minutes:02d}:{seconds:02d}")
+            
+            messagebox.showinfo("Settings Updated", 
+                            "Settings have been updated. Timer has been reset with the new duration.")
+            
+            settings_window.destroy()
         
-        save_btn = ctk.CTkButton(settings_window, text="Save", 
+        save_btn = ctk.CTkButton(settings_window, 
+                                text="Save",
+                                width=200,
                                 command=save_settings)
-        save_btn.pack(pady=20)
+        save_btn.pack(pady=30)
+
+        
 
     def update_pomodoro_status(self):
         self.target_color = {"r": 128, "g": 128, "b": 128}
@@ -867,19 +924,6 @@ class SOLARIS(ctk.CTk):
         else:
             self.pomodoro_status_label.configure(text="Long Break")
 
-    def on_pomodoro_resize(self, event):
-        # Update circle positions when canvas is resized
-        center_x = event.width / 2
-        center_y = event.height / 2
-        for i, circle in enumerate(self.animation_circles):
-            angle = (i * math.pi / 3)
-            circle['x'] = center_x + 120 * math.cos(angle)
-            circle['y'] = center_y + 120 * math.sin(angle)
-        
-        # Update label positions
-        self.timer_label.place(relx=0.5, rely=0.4, anchor="center")
-        self.pomodoro_status_label.place(relx=0.5, rely=0.5, anchor="center")
-    
     def add_pomodoro_session_to_history(self):
         session = {
             "start_time": datetime.now().strftime("%I:%M %p"),
@@ -912,10 +956,6 @@ class SOLARIS(ctk.CTk):
         with open("pomodoro_history.json", "w") as f:
             json.dump(sessions, f, indent=4)
 
-    def save_pomodoro_settings(self):
-        with open("pomodoro_settings.json", "w") as f:
-            json.dump(self.pomodoro_settings, f, indent=4)
-
     def display_pomodoro_session(self, session):
         session_frame = ctk.CTkFrame(self.history_frame)
         session_frame.pack(fill="x", pady=5, padx=5)
@@ -938,17 +978,6 @@ class SOLARIS(ctk.CTk):
         # Add separator line
         separator = ctk.CTkFrame(session_frame, height=1)
         separator.pack(fill="x", padx=5)
-
-
-
-
-
-
-
-
-
-
-
 
 
     # TO-DO LIST
@@ -1001,6 +1030,7 @@ class SOLARIS(ctk.CTk):
         self.task_window = ctk.CTkToplevel(self)
         self.task_window.title("Create New Task")
         self.task_window.geometry("400x650")
+        self.task_window.resizable(False, False)
         self.task_window.grab_set()  # Make window modal
         
         # Task name
