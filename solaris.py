@@ -96,11 +96,6 @@ class SOLARIS(ctk.CTk):
         self.tabview.add("GPA Calculator")
         self.tabview.add("Pomodoro Timer")
         self.tabview.add("To-Do List")
-            
-        # Initialize components
-        self.setup_gpa_calculator()
-        self.setup_pomodoro_timer()
-        self.setup_todo_list()
 
         # GPA CALCULATOR DATA INIT
         self.subject_data = self.load_subjects_from_json("subject_data.json")
@@ -117,6 +112,11 @@ class SOLARIS(ctk.CTk):
         # GPA CALCULATOR DATA INIT
         self.subject_data = self.load_subjects_from_json("subject_data.json")
         self.gp_and_credits = [(i["gp"],i["credits"],i["subject"]) for i in self.subject_data]
+
+        # Initialize components
+        self.setup_gpa_calculator()
+        self.setup_pomodoro_timer()
+        self.setup_todo_list()
         
     
 
