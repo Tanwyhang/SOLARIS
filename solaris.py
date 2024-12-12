@@ -37,6 +37,13 @@ class SOLARIS(ctk.CTk):
             }
         }
 
+        self.grade_colors = {
+            "A+": "#5ba05e", "A": "#5ba05e", "A-": "#8ab15c",
+            "B+": "#4192d3", "B": "#4192d3", "C": "#daae2c",
+            "D": "#de6843", "F": "#d85c53"
+    }
+
+
         # Window Configuration        
         self.title("SOLARIS - Study & Productivity Hub")
         width = self.winfo_screenwidth()  
@@ -347,6 +354,7 @@ class SOLARIS(ctk.CTk):
         self.chart_frame = ctk.CTkFrame(self.main_frame)
         self.chart_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
 
+        self.chart_label = ctk.CTkLabel(self.chart_frame)
         self.pie_chart = ctk.CTkCanvas(self.chart_frame, background="#363636", highlightthickness=0)
         self.pie_chart.grid(sticky='nsew')
         self.pie_chart.pack(padx=25, pady=25, expand=True, fill="both")
@@ -388,19 +396,32 @@ class SOLARIS(ctk.CTk):
 
             # Second pass to create actual frames with consistent width
             for col_title, col_value in column_data:
-                col_frame = ctk.CTkFrame(row_frame, width=max_width + 20)
-                col_frame.pack(side="left", padx=10)
-                col_label = ctk.CTkLabel(col_frame, text=col_value, anchor="w")
-                col_label.pack(pady=2)
-                title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
-                title_label.pack(pady=2)
+                
+                if col_title == "Subject": 
+                    sub_label = ctk.CTkLabel(row_frame, text=col_value, font=ctk.CTkFont("Roboto", 15, "bold"))
+                    sub_label.pack(anchor="w", padx=10)
+                elif col_title == "Grade":
+                    col_frame = ctk.CTkFrame(row_frame, width=max_width, fg_color=self.grade_colors[col_value])
+                    col_frame.pack(side="left", padx=10, fill="x")
+                    col_label = ctk.CTkLabel(col_frame, text=col_value, anchor="w")
+                    col_label.pack(pady=2)
+                    title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
+                    title_label.pack(pady=2)
+                else:
+                    col_frame = ctk.CTkFrame(row_frame, width=max_width+20)
+                    col_frame.pack(side="left", padx=10)
+                    col_label = ctk.CTkLabel(col_frame, text=col_value, anchor="w")
+                    col_label.pack(pady=2)
+                    title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
+                    title_label.pack(pady=2)
             
             # Add delete button
             #chek
             delete_btn = ctk.CTkButton(row_frame, text="Delete", width=60,
                         command=lambda row=row_frame, 
                         sub=subject_info["subject"]: self.delete_subject(row, sub), 
-                        fg_color="#b34242")
+                        fg_color=self.COLORS["red"]["main"],
+                        hover_color=self.COLORS["red"]["hover"])
             delete_btn.pack(side="right", padx=20)
 
         # Update initial calculations
@@ -441,6 +462,7 @@ class SOLARIS(ctk.CTk):
                     self.subject_data[i] = new_subject
                     subject_exists = True
                     break
+                
             
             if not subject_exists:
                 self.subject_data.append(new_subject)
@@ -470,22 +492,34 @@ class SOLARIS(ctk.CTk):
                 title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
                 title_label.pack(pady=2)
                 max_width = max(max_width, col_label.winfo_width(), title_label.winfo_width())
-
-            # Set the same width for all column frames
+            
+            # Second pass to create actual frames with consistent width
             for col_title, col_value in column_data:
-                col_frame = ctk.CTkFrame(row_frame, width=max_width + 20)
-                col_frame.pack(side="left", padx=10)
-                col_label = ctk.CTkLabel(col_frame, text=col_value, anchor="w")
-                col_label.pack(pady=2)
-                title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
-                title_label.pack(pady=2)
+                
+                if col_title == "Subject": 
+                    sub_label = ctk.CTkLabel(row_frame, text=col_value, font=ctk.CTkFont("Roboto", 15, "bold"))
+                    sub_label.pack(anchor="w", padx=10)
+                elif col_title == "Grade":
+                    col_frame = ctk.CTkFrame(row_frame, width=max_width, fg_color=self.grade_colors[col_value])
+                    col_frame.pack(side="left", padx=10, fill="x")
+                    col_label = ctk.CTkLabel(col_frame, text=col_value, anchor="w")
+                    col_label.pack(pady=2)
+                    title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
+                    title_label.pack(pady=2)
+                else:
+                    col_frame = ctk.CTkFrame(row_frame, width=max_width+20)
+                    col_frame.pack(side="left", padx=10)
+                    col_label = ctk.CTkLabel(col_frame, text=col_value, anchor="w")
+                    col_label.pack(pady=2)
+                    title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
+                    title_label.pack(pady=2)
             
             # Add delete button
             # chek
             delete_btn = ctk.CTkButton(row_frame, text="Delete", width=60,
                         command=lambda row=row_frame, 
                         subject=subject: self.delete_subject(row, subject), 
-                        fg_color="#c45151")
+                        fg_color=self.COLORS["red"]["main"], hover_color=self.COLORS["red"]["hover"])
             delete_btn.pack(side="right", padx=20)
             
             # Clear entries

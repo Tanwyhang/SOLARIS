@@ -1,5 +1,5 @@
 {
-    "work_duration": 1,
-    "short_break": 1,
-    "long_break": 5
+    "work_duration": 45,
+    "short_break": 5,
+    "long_break": 15
 }
