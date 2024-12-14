@@ -1,58 +1,92 @@
 {
-    "subjects": [
-        {
-            "subject": "Calculus I",
-            "grade": "A",
-            "gp": 4.0,
-            "credits": 4.0
+    "semesters": {
+        "Semester 5": {
+            "subjects": [
+                {
+                    "subject": "Advanced Machine Learning",
+                    "grade": "A",
+                    "gp": 4.0,
+                    "credits": 5.0
+                },
+                {
+                    "subject": "Natural Language Processing",
+                    "grade": "A-",
+                    "gp": 3.7,
+                    "credits": 4.0
+                },
+                {
+                    "subject": "Research Methodology",
+                    "grade": "B+",
+                    "gp": 3.5,
+                    "credits": 3.0
+                },
+                {
+                    "subject": "Advanced Database Systems",
+                    "grade": "B",
+                    "gp": 3.0,
+                    "credits": 4.0
+                },
+                {
+                    "subject": "Professional Ethics in Technology",
+                    "grade": "A",
+                    "gp": 4.0,
+                    "credits": 2.0
+                },
+                {
+                    "subject": "Quantum Computing Fundamentals",
+                    "grade": "B+",
+                    "gp": 3.5,
+                    "credits": 3.0
+                },
+                {
+                    "subject": "Industry Project",
+                    "grade": "A-",
+                    "gp": 3.7,
+                    "credits": 6.0
+                }
+            ],
+            "gpa": 3.72
         },
-        {
-            "subject": "Computer Science",
-            "grade": "A+",
-            "gp": 4.0,
-            "credits": 3.0
-        },
-        {
-            "subject": "Physics 101",
-            "grade": "B+",
-            "gp": 3.33,
-            "credits": 4.0
-        },
-        {
-            "subject": "English Comp",
-            "grade": "A-",
-            "gp": 3.75,
-            "credits": 3.0
-        },
-        {
-            "subject": "Chemistry Lab",
-            "grade": "A",
-            "gp": 4.0,
-            "credits": 2.0
-        },
-        {
-            "subject": "Statistics",
-            "grade": "B+",
-            "gp": 3.33,
-            "credits": 3.0
-        },
-        {
-            "subject": "Psychology 101",
-            "grade": "A-",
-            "gp": 3.75,
-            "credits": 3.0
-        },
-        {
-            "subject": "History",
-            "grade": "F",
-            "gp": 0.0,
-            "credits": 10.0
-        },
-        {
-            "subject": "Food Science",
-            "grade": "C",
-            "gp": 2.0,
-            "credits": 8.0
+        "Semester 6": {
+            "subjects": [
+                {
+                    "subject": "Artificial Intelligence Capstone",
+                    "grade": "A",
+                    "gp": 4.0,
+                    "credits": 6.0
+                },
+                {
+                    "subject": "Cloud Computing Architecture",
+                    "grade": "B+",
+                    "gp": 3.5,
+                    "credits": 4.0
+                },
+                {
+                    "subject": "Cybersecurity Principles",
+                    "grade": "A-",
+                    "gp": 3.7,
+                    "credits": 5.0
+                },
+                {
+                    "subject": "Advanced Network Programming",
+                    "grade": "B",
+                    "gp": 3.0,
+                    "credits": 3.0
+                },
+                {
+                    "subject": "Technical Writing and Communication",
+                    "grade": "A",
+                    "gp": 4.0,
+                    "credits": 2.0
+                },
+                {
+                    "subject": "Machine Learning Deployment Strategies",
+                    "grade": "B+",
+                    "gp": 3.5,
+                    "credits": 4.0
+                }
+            ],
+            "gpa": 3.65
         }
-    ]
+    }
 }

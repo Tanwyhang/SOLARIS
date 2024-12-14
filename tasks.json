@@ -5,7 +5,8 @@
             "date_created": "2024-02-15",
             "deadline": "2024-03-10",
             "remarks": "Include sales figures and future projections",
-            "complete": false
+            "complete": true,
+            "completion_date": "2024-12-14"
         },
         {
             "name": "Weekly Team Meeting",
@@ -51,6 +52,13 @@
             "date_created": "2024-12-12",
             "deadline": "2024-02-27",
             "remarks": "Discuss Q1 goals",
+            "complete": false
+        },
+        {
+            "name": "Complete Project Presentation (Recreated)",
+            "date_created": "2024-12-14",
+            "deadline": "2024-03-10",
+            "remarks": "Include sales figures and future projections",
             "complete": false
         }
     ]

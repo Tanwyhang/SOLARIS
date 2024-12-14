@@ -5,6 +5,8 @@ import pywinstyles
 import time
 import math
 import json
+import sys
+import os
 
 # importing for todolist
 from tkcalendar import Calendar
@@ -13,9 +15,73 @@ import json
 from tkinter import messagebox
 
 
+class SettingsManager:
+    def __init__(self):
+        self.settings_file = "app_settings.json"
+        self.default_settings = {
+            "theme": "dark",
+            "scaling": 1.3
+        }
+    
+    def load_settings(self):
+        """Load settings from file or create with defaults if file doesn't exist"""
+        try:
+            if os.path.exists(self.settings_file):
+                with open(self.settings_file, 'r') as f:
+                    return json.load(f)
+            return self.default_settings
+        except Exception as e:
+            print(f"Error loading settings: {e}")
+            return self.default_settings
+    
+    def save_settings(self, settings):
+        """Save settings to file"""
+        try:
+            with open(self.settings_file, 'w') as f:
+                json.dump(settings, f, indent=4)
+            return True
+        except Exception as e:
+            print(f"Error saving settings: {e}")
+            return False
+
+
 class SOLARIS(ctk.CTk):
     def __init__(self):
         super().__init__()
+
+        # Initialize settings manager
+        self.settings_manager = SettingsManager()
+        saved_settings = self.settings_manager.load_settings()
+        
+        # Initialize settings variables
+        self.current_theme = saved_settings["theme"]
+        self.current_scaling = saved_settings["scaling"]
+
+        self.theme_colors = {
+            1: "#F0F7F0",  # Light milky green
+            2: "#E7F0E7",  # Slightly darker milky green
+            3: "#DDE8DD",  # Slightly more saturated green
+            4: "#D4E1D4",  # Deeper green
+            5: "#CBD9CB",  # Darker, more earthy green
+            6: "#C2D2C2",  # Continued darkening of the green
+            7: "#B9CDB9",  # Even deeper green
+            8: "#B0C7B0",  # Darker, more muted green
+            9: "#A7C2A7",  # Slightly lighter, but still deep green
+            10: "#9EBCA0",  # Continued darkening of the green
+            11: "#95B69B",  # Darker, more saturated green
+            12: "#8CB196",  # Deeper, more earthy green
+            13: "#84AC91",  # Slightly lighter, but still deep green
+            14: "#7BA78C",  # Darker, more muted green
+            15: "#72A387",  # Deeper, more saturated green
+            16: "#699E83",  # Darker, more earthy green
+            17: "#60987F",  # Slightly lighter, but still deep green
+            18: "#57937A",  # Darker, more muted green
+            19: "#4E8D75",  # Deeper, more saturated green
+            20: "#458870",   # Darkest, most earthy green
+            21: "#03543c" # extra dark for text
+        }
+
+
 
         #COLOR SETUP
         self.COLORS = {
@@ -50,11 +116,12 @@ class SOLARIS(ctk.CTk):
         height = self.winfo_screenheight() 
         self.geometry(f"{width}x{height}")
 
-        ctk.set_default_color_theme("blue")
-        ctk.set_appearance_mode("dark")
-        ctk.set_widget_scaling(1.3)      # Increase the scaling (default is 1.0)
-        self.default_font = ctk.CTkFont("Roboto", 14)
+        
+
         pywinstyles.apply_style(self, "mica") # window 11 theme 
+        ctk.set_default_color_theme("green") 
+        ctk.set_appearance_mode(self.current_theme)
+        ctk.set_widget_scaling(self.current_scaling)        
 
         # Show splash screen first
         self.show_splash_screen()
@@ -103,10 +170,7 @@ class SOLARIS(ctk.CTk):
         self.tabview.add("GPA Calculator")
         self.tabview.add("Pomodoro Timer")
         self.tabview.add("To-Do List")
-
-        # GPA CALCULATOR DATA INIT
-        self.subject_data = self.load_subjects_from_json("subject_data.json")
-        self.gp_and_credits = [(i["gp"],i["credits"],i["subject"]) for i in self.subject_data]
+        self.tabview.add("Settings")
             
         # CHART HOVER VARS
         self._tooltip_id = None
@@ -115,32 +179,509 @@ class SOLARIS(ctk.CTk):
         self._target_x = 0
         self._target_y = 0
         self._animation_active = False
-
-        # GPA CALCULATOR DATA INIT
-        self.subject_data = self.load_subjects_from_json("subject_data.json")
-        self.gp_and_credits = [(i["gp"],i["credits"],i["subject"]) for i in self.subject_data]
+        self._animation_after_id = None  # Track animation callback
+        self.editing_subject = False
 
         # Initialize components
         self.setup_gpa_calculator()
         self.setup_pomodoro_timer()
         self.setup_todo_list()
-        
+        self.setup_settings()  # Initialize settings tab
     
+    def toggle_theme(self):
+            """Toggle between light and dark themes"""
+            if self.current_theme == "dark":
+                ctk.set_appearance_mode("light")
+                self.current_theme = "light"
+            else:
+                ctk.set_appearance_mode("dark")
+                self.current_theme = "dark"
 
-    def load_subjects_from_json(self, file_path):
-        try:
-            with open(file_path, "r") as file:
-                data = json.load(file)
-                return data["subjects"]
-        except FileNotFoundError:
-            return []
+
+    def setup_gpa_calculator(self):
+        tab = self.tabview.tab("GPA Calculator")
+        
+        # Main container
+        main_container = ctk.CTkFrame(tab, fg_color=self.theme_colors[10])
+        main_container.pack(fill="both", expand=True, padx=10, pady=0)
+        
+        # Configure grid for three columns
+        main_container.grid_columnconfigure((0, 1, 2), weight=0)
+        main_container.grid_rowconfigure(0, weight=1)
+
+        # Configure grid for three columns with different weights
+        main_container.grid_columnconfigure(0, weight=1)  # Left panel - weight 2
+        main_container.grid_columnconfigure(1, weight=8)  # Middle panel - weight 3
+        main_container.grid_columnconfigure(2, weight=6)  # Right panel - weight 4
+        main_container.grid_rowconfigure(0, weight=1)
+        
+        # Left panel - Semester Selection
+        semester_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        semester_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        
+        # Semester selection header
+        ctk.CTkLabel(semester_frame, text="Semesters", 
+                    font=("Roboto", 20, "bold"), text_color=self.theme_colors[21]).pack(pady=10)
+        
+        # Add semester button
+        add_sem_btn = ctk.CTkButton(semester_frame, text="Add Next Semester",
+                                command=self.add_new_semester, fg_color=self.theme_colors[16], hover_color=self.theme_colors[18], text_color=self.theme_colors[1], font=ctk.CTkFont(weight="bold"))
+        add_sem_btn.pack(pady=5)
+        
+        # Semester list (scrollable)
+        self.semester_list = ctk.CTkScrollableFrame(semester_frame, fg_color=self.theme_colors[5])
+        self.semester_list.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Middle panel - Subject Display
+        middle_frame = ctk.CTkFrame(main_container, fg_color=self.theme_colors[13])
+        middle_frame.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+        middle_frame.grid_columnconfigure(0, weight=1)  # Allow middle frame content to resize
+        
+        
+        # Subjects scrollable frame
+        self.subjects_scrollable = ctk.CTkScrollableFrame(middle_frame, fg_color=self.theme_colors[7])
+        self.subjects_scrollable.pack(fill="both", expand=True, padx=10, pady=10)
+        self.show_add_new_subject_btn()
+        
+        # GPA display
+        self.gpa_label = ctk.CTkLabel(middle_frame, text="GPA: 0.00", 
+                                    font=("Roboto", 30, "bold"), text_color=self.theme_colors[21])
+        self.gpa_label.pack(pady=10)
+        
+        # Right panel - Pie Chart
+        chart_frame = ctk.CTkFrame(main_container, fg_color=self.theme_colors[7])
+        chart_frame.grid(row=0, column=2, sticky="nsew", padx=10, pady=5)
+        
+        self.animation_progress = 0
+        self.pie_chart = ctk.CTkCanvas(chart_frame, background=self.theme_colors[7], 
+                                    highlightthickness=0)
+        self.pie_chart.pack(padx=25, pady=25, expand=True, fill="both")
+        
+        # Initialize semester data and variables
+        self.current_semester = None
+        self.semesters = self.load_subjects_from_json("subject_data.json")
+        self.refresh_semester_list()
     
-    def save_subjects_to_json(self, file_path, subjects):
-        data = {"subjects": subjects}
-        with open(file_path, "w") as file:
-            json.dump(data, file, indent=4)
+    def reload_application(self):
+            """Reload application settings and refresh UI"""
+            # Reload settings
+            saved_settings = self.settings_manager.load_settings()
+            self.current_theme = saved_settings["theme"]
+            self.current_scaling = saved_settings["scaling"]
+            
+            # Apply settings
+            ctk.set_appearance_mode(self.current_theme)
+            ctk.set_widget_scaling(self.current_scaling)
+            
+            # Destroy all tabs
+            for tab_name in ["GPA Calculator", "Pomodoro Timer", "To-Do List", "Settings"]:
+                if tab_name in self.tabview._tab_dict:
+                    self.tabview.delete(tab_name)
+            
+            # Recreate all tabs
+            self.tabview.add("GPA Calculator")
+            self.tabview.add("Pomodoro Timer")
+            self.tabview.add("To-Do List")
+            self.tabview.add("Settings")
+            
+            # Reinitialize components
+            self.setup_gpa_calculator()
+            self.setup_pomodoro_timer()
+            self.setup_todo_list()
+            self.setup_settings()
+
+            # Show confirmation
+            messagebox.showinfo("Settings Applied", "All settings have been applied successfully!")
+
+    def add_new_semester(self):
+        # Find the next semester number
+        existing_numbers = []
+        for semester in self.semesters.keys():
+            try:
+                num = int(semester.split()[1])  # Extract number from "Semester X"
+                existing_numbers.append(num)
+            except (IndexError, ValueError):
+                continue
+        
+        next_number = 1
+        if existing_numbers:
+            next_number = max(existing_numbers) + 1
+        
+        semester_name = f"Semester {next_number}"
+        
+        if semester_name not in self.semesters:
+            self.semesters[semester_name] = {
+                "subjects": [],
+                "gpa": 0.0
+            }
+            self.save_subjects_to_json("subject_data.json", self.semesters)
+            self.refresh_semester_list()
+            self.switch_semester(semester_name)
+
+    def refresh_semester_list(self):
+        # Clear existing semester buttons
+        for widget in self.semester_list.winfo_children():
+            widget.destroy()
+        
+        # Create buttons for each semester
+        for i, semester_name in enumerate(sorted(self.semesters.keys(), key=lambda x: int(x.split()[1]))):
+            # Calculate the sine-line gradient index
+            sine_index = ((i % 10) / 9) * math.pi
+            gradient_index = int(((math.sin(sine_index) + 1) * 5) * 1) + 5
+            
+            semester_frame = ctk.CTkFrame(self.semester_list, 
+                                        fg_color=self.theme_colors[min(gradient_index, 20)])
+            semester_frame.pack(fill="x", pady=2)
+            
+            btn = ctk.CTkButton(semester_frame, 
+                            text=semester_name,
+                            command=lambda s=semester_name: self.switch_semester(s),
+                            fg_color=self.theme_colors[min(gradient_index + 1, len(self.theme_colors))],
+                            hover_color=self.theme_colors[20],
+                            text_color=self.theme_colors[1], font=ctk.CTkFont(weight="bold"))
+            btn.pack(side="left", expand=True, fill="x", padx=2)
+            
+            del_btn = ctk.CTkButton(semester_frame, 
+                                text="×",
+                                width=30,
+                                command=lambda s=semester_name: self.delete_semester(s),
+                                fg_color="#a82835")
+            del_btn.pack(side="right", padx=2)
+
+    def switch_semester(self, semester_name):
+        self.current_semester = semester_name
+        self.clear_subject_display()
+        self.show_add_new_subject_btn()
+        
+        # Load and display subjects for the selected semester
+        semester_data = self.semesters[semester_name]
+        for subject in semester_data["subjects"]:
+            self.display_subject(subject)
+        
+        # Update GPA display
+        self.gpa_label.configure(text=f"GPA: {semester_data['gpa']:.2f}")
+        
+        # Update pie chart
+        self.animation_progress = 0
+        self.update_pie_chart()
+
+    def delete_semester(self, semester_name):
+        if messagebox.askyesno("Confirm Delete", 
+                            f"Delete {semester_name}?"):
+            del self.semesters[semester_name]
+            self.save_subjects_to_json("subject_data.json", self.semesters)
+            self.refresh_semester_list()
+            self.clear_subject_display()
+            self.current_semester = None
+
+    def clear_subject_display(self):
+        for widget in self.subjects_scrollable.winfo_children():
+            widget.destroy()
+        self.gpa_label.configure(text="GPA: 0.00")
+        self.pie_chart.delete("all")
+
+    def add_subject(self):
+        if not self.current_semester:
+            messagebox.showerror("Error", "Please select or create a semester first")
+            return
+        
+        grade_to_gpa = {
+            "A+": 4.0, "A": 4.0, "A-": 3.75,
+            "B+": 3.33, "B": 3.0, "C": 2.0, 
+            "D": 1.0, "F": 0.0
+        }
+
+        try:
+            # Get and validate input values
+            subject = self.subject_entry.get().strip()
+            selected_grade = self.grade_var.get()
+            grade_points = grade_to_gpa[selected_grade]
+            credits = float(self.credits_entry.get())
+
+            if not subject or selected_grade == "Select Grade":
+                return messagebox.showerror("Error", "Please fill in all fields")
+
+            # Create new subject data
+            new_subject = {
+                "subject": subject,
+                "grade": selected_grade,
+                "gp": grade_points,
+                "credits": credits
+            }
+
+            # Add to current semester
+            semester_data = self.semesters[self.current_semester]
+            
+            # Check if subject already exists in this semester
+            for i, existing_subject in enumerate(semester_data["subjects"]):
+                if existing_subject["subject"] == subject:
+                    semester_data["subjects"][i] = new_subject
+                    self.clear_subject_display()
+                    for subject in semester_data["subjects"]:
+                        self.display_subject(subject)
+                    break
+            else:
+                semester_data["subjects"].append(new_subject)
+                self.display_subject(new_subject)
+
+            # Update GPA
+            self.calculate_semester_gpa(self.current_semester)
+            
+            # Clear inputs
+            self.subject_entry.delete(0, 'end')
+            self.credits_entry.delete(0, 'end')
+            self.grade_var.set("Select Grade")
+            
+            # Save and update display
+            self.save_subjects_to_json("subject_data.json", self.semesters)
+            self.update_pie_chart()
+            self.input_window.destroy()
+
+        except ValueError:
+            messagebox.showerror("Error", "Credits must be a valid number")
+        except KeyError:
+            messagebox.showerror("Error", "Please select a valid grade")
+
+    def calculate_semester_gpa(self, semester_name):
+        semester_data = self.semesters[semester_name]
+        subjects = semester_data["subjects"]
+        
+        total_points = 0
+        total_credits = 0
+        
+        for subject in subjects:
+            total_points += subject["gp"] * subject["credits"]
+            total_credits += subject["credits"]
+        
+        if total_credits > 0:
+            gpa = total_points / total_credits
+            semester_data["gpa"] = gpa
+            self.gpa_label.configure(text=f"GPA: {gpa:.2f}")
+        else:
+            semester_data["gpa"] = 0.0
+            self.gpa_label.configure(text="GPA: 0.00")
+
+    def update_pie_chart(self):
+        if not self.current_semester:
+            return
+        
+        semester_data = self.semesters[self.current_semester]
+        sub_weight = {s["subject"]: s["credits"] for s in semester_data["subjects"]}
+        
+        self.draw_pie_chart(sub_weight)
+
+    def display_subject(self, subject_info):
+        # Create main card frame
+        card = ctk.CTkFrame(self.subjects_scrollable, fg_color=self.theme_colors[5], corner_radius=10)
+        card.pack(fill="x", padx=10, pady=5)
+        
+        # Header frame
+        header = ctk.CTkFrame(card, fg_color=self.theme_colors[17], corner_radius=6)
+        header.pack(fill="x", padx=5, pady=5)
+        
+        # Subject title in header
+        subject_label = ctk.CTkLabel(
+            header, 
+            text=subject_info["subject"],
+            font=("Roboto", 16, "bold"),
+            anchor="w",
+            text_color=self.theme_colors[3]
+        )
+        subject_label.pack(side="left", padx=10)
+        
+        # Buttons frame in header
+        btn_frame = ctk.CTkFrame(header, fg_color="transparent")
+        btn_frame.pack(side="right", padx=5)
+        
+        # Edit button
+        edit_btn = ctk.CTkButton(
+            btn_frame,
+            text="✏️",
+            width=30,
+            command=lambda: self.edit_subject(card, subject_info),
+            fg_color="transparent",
+            hover_color=self.theme_colors[10]
+        )
+        edit_btn.pack(side="left", padx=2)
+        
+        # Delete button
+        delete_btn = ctk.CTkButton(
+            btn_frame,
+            text="🗑️",
+            width=30,
+            command=lambda s=subject_info["subject"]: self.delete_subject(s),
+            fg_color="transparent",
+            hover_color=self.theme_colors[10]
+        )
+        delete_btn.pack(side="left" , padx=2)
+        
+        # Content frame
+        content = ctk.CTkFrame(card, fg_color="transparent")
+        content.pack(fill="x", padx=15, pady=(0, 10))
+        
+        # Info grid
+        info_data = [
+            ("Grade", subject_info["grade"]),
+            ("GP", f"{subject_info['gp']:.2f}"),
+            ("Credits", f"{subject_info['credits']:.1f}")
+        ]
+        
+        for i, (title, value) in enumerate(info_data):
+            frame = ctk.CTkFrame(content, fg_color="transparent")
+            frame.pack(side="left", expand=True, fill="x", padx=5)
+            
+            value_label = ctk.CTkLabel(frame, text=value, font=("Roboto", 24, "bold"), text_color=self.theme_colors[21])
+            value_label.pack()
+            
+            title_label = ctk.CTkLabel(
+                frame, 
+                text=title,
+                font=("Roboto", 11),
+                text_color="gray"
+            )
+            title_label.pack()
+
+    def edit_subject(self, card_frame, subject_info):
+
+        if self.editing_subject:
+            return False
+        else:
+            self.editing_subject = True
+
+        # Create edit frame
+        edit_frame = ctk.CTkFrame(card_frame, fg_color="#333333")
+        edit_frame.pack(fill="x", padx=15, pady=10)
+        
+        # Grade dropdown
+        grade_var = ctk.StringVar(value=subject_info["grade"])
+        grade_frame = ctk.CTkFrame(edit_frame, fg_color="transparent")
+        grade_frame.pack(fill="x", pady=5)
+        
+        ctk.CTkLabel(grade_frame, text="Grade:").pack(side="left", padx=5)
+        grade_dropdown = ctk.CTkOptionMenu(
+            grade_frame,
+            variable=grade_var,
+            values=["A+", "A", "A-", "B+", "B", "C", "D", "F"]
+        )
+        grade_dropdown.pack(side="left", padx=5)
+        
+        # Credits entry
+        credits_frame = ctk.CTkFrame(edit_frame, fg_color="transparent")
+        credits_frame.pack(fill="x", pady=5)
+        
+        ctk.CTkLabel(credits_frame, text="Credits:").pack(side="left", padx=5)
+        credits_entry = ctk.CTkEntry(credits_frame, width=70)
+        credits_entry.insert(0, str(subject_info["credits"]))
+        credits_entry.pack(side="left", padx=5)
+        
+        # Buttons frame
+        btn_frame = ctk.CTkFrame(edit_frame, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=5)
+
+        def cancel_edit():
+            self.editing_subject = False
+            edit_frame.destroy()
+        
+        def save_changes():
+
+            try:
+                grade_to_gpa = {
+                    "A+": 4.0, "A": 4.0, "A-": 3.75,
+                    "B+": 3.33, "B": 3.0, "C": 2.0, 
+                    "D": 1.0, "F": 0.0
+                }
+                
+                new_grade = grade_var.get()
+                new_credits = float(credits_entry.get())
+                
+                # Update subject info
+                semester_data = self.semesters[self.current_semester]
+                for subject in semester_data["subjects"]:
+                    if subject["subject"] == subject_info["subject"]:
+                        subject["grade"] = new_grade
+                        subject["gp"] = grade_to_gpa[new_grade]
+                        subject["credits"] = new_credits
+                        break
+                
+                # Save changes
+                self.save_subjects_to_json("subject_data.json", self.semesters)
+                
+                # Refresh display
+                self.clear_subject_display()
+                self.show_add_new_subject_btn()
+                for subject in semester_data["subjects"]:
+                    self.display_subject(subject)
+                
+                # Update calculation
+                self.calculate_semester_gpa(self.current_semester)
+                self.update_pie_chart()
+                self.editing_subject = False
+                
+            except ValueError:
+                messagebox.showerror("Error", "Credits must be a valid number")
+            except KeyError:
+                messagebox.showerror("Error", "Please select a valid grade")
+        
+        # Save button
+        save_btn = ctk.CTkButton(
+            btn_frame,
+            text="Save",
+            command=save_changes,
+            fg_color="#2c8a6e",
+            hover_color="#26755d"
+        )
+        save_btn.pack(side="left", padx=5, expand=True)
+        
+        # Cancel button
+        cancel_btn = ctk.CTkButton(
+            btn_frame,
+            text="Cancel",
+            command=cancel_edit,
+            fg_color="#dc3545",
+            hover_color="#a82835"
+        )
+        cancel_btn.pack(side="left", padx=5, expand=True)
+
+    def delete_subject(self, subject_name):
+        if not self.current_semester:
+            return
+        
+        semester_data = self.semesters[self.current_semester]
+        semester_data["subjects"] = [
+            s for s in semester_data["subjects"] 
+            if s["subject"] != subject_name
+        ]
+        
+        self.save_subjects_to_json("subject_data.json", self.semesters)
+        self.clear_subject_display()
+        self.show_add_new_subject_btn()
+        
+        for subject in semester_data["subjects"]:
+            self.display_subject(subject)
+        
+        self.calculate_semester_gpa(self.current_semester)
+        self.update_pie_chart()
+    
+    def calculate_gpa(self, gp_and_credits: list):
+        total_points = 0
+        total_credits = 0
+        
+        
+        for pair in gp_and_credits:
+            total_points += pair[0] * pair[1]
+            total_credits += pair[1]
+        
+        if total_credits > 0:
+            gpa = total_points / total_credits
+            self.gpa_label.configure(text=f"GPA: {gpa:.2f}")
+
     
     def draw_pie_chart(self, sub_weight_set):
+        # Cancel any ongoing animation
+        if self._animation_after_id is not None:
+            self.after_cancel(self._animation_after_id)
+            self._animation_after_id = None
+    
         self.pie_chart.delete("all")
         
         subject_weights = sub_weight_set
@@ -155,7 +696,21 @@ class SOLARIS(ctk.CTk):
         y = canvas_height // 2
         radius = min(canvas_width, canvas_height) // 2 - 20
         
-        colors = ["#8B5FBF", "#6D70D6", "#4F82ED", "#38A0F2", "#32B7E6", "#4BD3C5", "#6FDFAA", "#8DE68D", "#A3EB6D", "#B6DF56", "#C6D047", "#D0BE42", "#D7A842", "#DE8F47", "#E47250"]
+        colors = [
+            # Base Color: #418c65 (Muted green)
+            '#ffffff', '#f4faf5', '#e9f5ea', '#dff0e0', '#d4ead6', 
+            '#c9e4cc', '#bedfc2', '#b3d9b8', '#a8d3ae', '#9dcea4', 
+            '#92c89a', '#87c290', '#7cbc86', '#71b67c', '#418c65',
+            
+            # Base Color: #2c5e46 (Deep forest green)
+            '#ffffff', '#f2f7f4', '#e6efea', '#dae7e0', '#cedfd6', 
+            '#c2d7cc', '#b6cfc2', '#aac7b8', '#9ebfae', '#92b7a4', 
+            '#86af9a', '#7aa790', 
+            
+            # Base Color: #134a3f (Dark teal)
+            '#ffffff', '#f0f5f4', '#e1ebe9', '#d2e1de', '#c3d7d3', 
+            '#b4cdc8', '#a5c3bd', '#96b9b2', '#87afa7', '#78a59c', 
+        ][::-2]
         
         # Store arc and legend items for animation
         self.pie_items = []
@@ -196,23 +751,21 @@ class SOLARIS(ctk.CTk):
                     x + radius * current_progress, 
                     y + radius * current_progress,
                     fill=colors[0],
-                    outline="white",
+                    outline="",
                     width=2
                 )
             
             # Animate legend with fade-in effect
-            legend_x = x + radius + 50
-            legend_y = y - radius
+            legend_x = x + radius + 10
+            legend_y = y - radius - 100
             
             for i, (subject, credits) in enumerate(subject_weights.items()):
                 # Calculate alpha for fade-in effect
-                alpha = int(255 * current_progress)
-                color = self.pie_chart.winfo_rgb(colors[i % len(colors)])
                 
                 # Draw legend items with current opacity
                 self.pie_chart.create_rectangle(
                     legend_x, legend_y + i * 30,
-                    legend_x + 20, legend_y + i * 30 + 20,
+                    legend_x - 20, legend_y + i * 30 + 20,
                     fill=colors[i % len(colors)],
                     outline="white"
                 )
@@ -220,11 +773,11 @@ class SOLARIS(ctk.CTk):
                 # Add percentage to legend
                 percentage = (credits / total_credits) * 100
                 self.pie_chart.create_text(
-                    legend_x - 60 - (3 * len(subject)), 
+                    legend_x - 110 - (3 * len(subject)), 
                     legend_y + i * 30 + 10,
                     text=f"{subject} ({percentage:.1f}%)", 
-                    font=("Arial", 12),
-                    fill=f"#{alpha:02x}{alpha:02x}{alpha:02x}"
+                    fill=self.theme_colors[21],
+                    font=("Arial", 12, "bold")
                 )
         
         # Animation loop
@@ -232,7 +785,8 @@ class SOLARIS(ctk.CTk):
             if step <= 80:  # 20 animation frames
                 progress = self.ease_out_cubic(step / 80)
                 animate(progress)
-                self.after(20, lambda: run_animation(step + 1))
+                # Store the after ID so we can cancel it if needed
+                self._animation_after_id = self.after(20, lambda: run_animation(step + 1))
         
         # Start animation
         run_animation()
@@ -253,7 +807,7 @@ class SOLARIS(ctk.CTk):
             self._tooltip_id = self.pie_chart.create_text(
                 self._tooltip_x, self._tooltip_y,
                 text=text,
-                fill="white",
+                fill=self.theme_colors[21],
                 font=("Arial", 15, "bold"),
                 anchor="w"
             )
@@ -297,285 +851,106 @@ class SOLARIS(ctk.CTk):
             self._animation_active = False
 
     # GPA CALCULATOR
-    def setup_gpa_calculator(self):
-        tab = self.tabview.tab("GPA Calculator")
-        
-        # Input frame
-        input_frame = ctk.CTkFrame(tab)
-        input_frame.pack(padx=10, pady=10, fill="x")
-        self.sub_weight = {}
+    # Replace these methods in your SOLARIS class
+
+    def load_subjects_from_json(self, file_path):
+        try:
+            with open(file_path, "r") as file:
+                data = json.load(file)
+                return data.get("semesters", {})  # Return semesters dictionary
+        except FileNotFoundError:
+            return {}  # Return empty dict if file doesn't exist
+
+    def save_subjects_to_json(self, file_path, semesters):
+        data = {"semesters": semesters}
+        with open(file_path, "w") as file:
+            json.dump(data, file, indent=4)
+    
+    def show_add_new_subject_btn(self):
+        # Add Subject Button at the top of left frame
+        self.add_new_subject_btn = ctk.CTkButton(
+            self.subjects_scrollable, ###
+            text="+ Add New Subject", 
+            command=self.show_add_subject_window,
+            height=40,
+            font=("Roboto", 14, "bold"),
+            fg_color=self.theme_colors[18],
+            hover_color=self.theme_colors[20]
+        )
+        self.add_new_subject_btn.pack(padx=20, pady=15)
+
+    def show_add_subject_window(self):
+        # Create new window
+        self.input_window = ctk.CTkToplevel(self)
+        self.input_window.title("Add New Subject")
+        self.input_window.geometry("400x500")
+        self.input_window.resizable(False, False)
+        self.input_window.grab_set()  # Make window modal
+
+        # Create main frame with padding
+        main_frame = ctk.CTkFrame(self.input_window)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
         
         # Subject input
-        ctk.CTkLabel(input_frame, text="Subject:").pack(side="left", padx=5)
-        self.subject_entry = ctk.CTkEntry(input_frame, width=150)
-        self.subject_entry.pack(side="left", padx=5)
+        ctk.CTkLabel(main_frame, text="Subject:", font=("Roboto", 14)).pack(anchor="w", pady=(10, 5))
+        self.subject_entry = ctk.CTkEntry(main_frame, width=300, height=35)
+        self.subject_entry.pack(pady=(0, 15))
         
         # Grade input
-        ctk.CTkLabel(input_frame, text="Grade:").pack(side="left", padx=5)
+        ctk.CTkLabel(main_frame, text="Grade:", font=("Roboto", 14)).pack(anchor="w", pady=(10, 5))
         self.grade_var = ctk.StringVar(value="Select Grade")
-        self.grade_dropdown = ctk.CTkOptionMenu(input_frame, 
-                                            variable=self.grade_var,
-                                            values=["A+", "A", "A-", "B+", "B", "C", "D", "F"])
-        
-
-        self.grade_dropdown.pack(side="left", padx=5)
+        self.grade_dropdown = ctk.CTkOptionMenu(
+            main_frame,
+            variable=self.grade_var,
+            values=["A+", "A", "A-", "B+", "B", "C", "D", "F"],
+            width=300,
+            height=35
+        )
+        self.grade_dropdown.pack(pady=(0, 15))
         
         # Credits input
-        ctk.CTkLabel(input_frame, text="Credits:").pack(side="left", padx=5)
-        self.credits_entry = ctk.CTkEntry(input_frame, width=70)
-        self.credits_entry.pack(side="left", padx=5)
+        ctk.CTkLabel(main_frame, text="Credits:", font=("Roboto", 14)).pack(anchor="w", pady=(10, 5))
+        self.credits_entry = ctk.CTkEntry(main_frame, width=300, height=35)
+        self.credits_entry.pack(pady=(0, 15))
         
-        # Add subject button
-        self.add_subject_btn = ctk.CTkButton(input_frame, text="Add Subject", 
-                                           command=self.add_subject, fg_color=self.COLORS["blue"]["main"], hover_color=self.COLORS["blue"]["hover"])
-        self.add_subject_btn.pack(side="left", padx=10)
-
-        # Frame for subject (left) and chart (right)
-        self.main_frame = ctk.CTkFrame(tab)
-        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)  # Fill both directions and expand
-
-        # Configure the columns for dynamic resizing
-        self.main_frame.columnconfigure((0, 1), weight=1)  # Two columns
-        self.main_frame.rowconfigure(0, weight=1)  # One row
-
-        # Left frame for subjects (scrollable)
-        self.subjects_frame = ctk.CTkFrame(self.main_frame)
-        self.subjects_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-
-        # Scrollable frame inside the subjects frame
-        self.subjects_scrollable = ctk.CTkScrollableFrame(self.subjects_frame, fg_color="#505050")
-        self.subjects_scrollable.pack(fill="both", expand=True, padx=10, pady=10)
-
-        # GPA display
-        self.gpa_label = ctk.CTkLabel(self.subjects_frame, text="GPA: 0.00", font=("Roboto", 30))
-        self.gpa_label.pack(pady=10)
-
-        # Right frame for pie chart
-        self.chart_frame = ctk.CTkFrame(self.main_frame)
-        self.chart_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
-
-        self.chart_label = ctk.CTkLabel(self.chart_frame)
-        self.pie_chart = ctk.CTkCanvas(self.chart_frame, background="#363636", highlightthickness=0)
-        self.pie_chart.grid(sticky='nsew')
-        self.pie_chart.pack(padx=25, pady=25, expand=True, fill="both")
-
-        #use loaded subject data, make rows, then draw
-        # GPA CALCULATOR DATA INIT
-
-        # BLOCK OF CODE TO LOAD AND POPULATE THE ARRAYS
-        self.subject_data = self.load_subjects_from_json("subject_data.json") # [{'subject': 'Math', 'grade': 'A', 'gp': 4.0, 'credits': 3}, {'subject': 'English', 'grade': 'B+', 'gp': 3.33, 'credits': 4}, {'subject': 'HISTORY', 'grade': 'A+', 'gp': 4.0, 'credits': 3.0}]
-        self.gp_and_credits = [(i["gp"],i["credits"],i["subject"]) for i in self.subject_data] # [(4.0, 3), (3.33, 4), (4.0, 3.0)]
-        self.sub_weight = {i["subject"]:i["credits"] for i in self.subject_data} # {'Math': 3, 'English': 4, 'HISTORY': 3.0}
-
-        self.calculate_gpa(self.gp_and_credits)
-        self.draw_pie_chart(self.sub_weight)
-
-         # Create visual elements for each loaded subject
-        for subject_info in self.subject_data:
-            row_frame = ctk.CTkFrame(self.subjects_scrollable)
-            row_frame.pack(fill="x", pady=5)
-
-            # Create column frames
-            column_data = [
-                ("Subject", subject_info["subject"][0:15:1]),
-                ("Grade", subject_info["grade"]),
-                ("GP", f"{subject_info['gp']:.2f}"),
-                ("Credits", f"{subject_info['credits']:.1f}")
-            ]
-
-            max_width = 0
-            # First pass to calculate maximum width
-            for col_title, col_value in column_data:
-                col_frame = ctk.CTkFrame(row_frame)
-                col_label = ctk.CTkLabel(col_frame, text=col_value, anchor="w")
-                col_label.pack(pady=2)
-                title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
-                title_label.pack(pady=2)
-                max_width = max(max_width, col_label.winfo_width(), title_label.winfo_width())
-                col_frame.destroy()  # Remove temporary frame used for width calculation
-
-            # Second pass to create actual frames with consistent width
-            for col_title, col_value in column_data:
-                
-                if col_title == "Subject": 
-                    sub_label = ctk.CTkLabel(row_frame, text=col_value, font=ctk.CTkFont("Roboto", 15, "bold"))
-                    sub_label.pack(anchor="w", padx=10)
-                elif col_title == "Grade":
-                    col_frame = ctk.CTkFrame(row_frame, width=max_width, fg_color=self.grade_colors[col_value])
-                    col_frame.pack(side="left", padx=10, fill="x")
-                    col_label = ctk.CTkLabel(col_frame, text=col_value, anchor="w")
-                    col_label.pack(pady=2)
-                    title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
-                    title_label.pack(pady=2)
-                else:
-                    col_frame = ctk.CTkFrame(row_frame, width=max_width+20)
-                    col_frame.pack(side="left", padx=10)
-                    col_label = ctk.CTkLabel(col_frame, text=col_value, anchor="w")
-                    col_label.pack(pady=2)
-                    title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
-                    title_label.pack(pady=2)
-            
-            # Add delete button
-            #chek
-            delete_btn = ctk.CTkButton(row_frame, text="Delete", width=60,
-                        command=lambda row=row_frame, 
-                        sub=subject_info["subject"]: self.delete_subject(row, sub), 
-                        fg_color=self.COLORS["red"]["main"],
-                        hover_color=self.COLORS["red"]["hover"])
-            delete_btn.pack(side="right", padx=20)
-
-        # Update initial calculations
-        if self.subject_data:  # Only calculate if there's data
-            self.calculate_gpa(self.gp_and_credits)
-            self.draw_pie_chart(self.sub_weight)
-
-    
-    def add_subject(self):
-        grade_to_gpa = {
-            "A+": 4.0, "A": 4.0, "A-": 3.75,
-            "B+": 3.33, "B": 3.0, "C": 2.0, 
-            "D": 1.0, "F": 0.0
-        }
-
-        try:
-            # Get and validate input values
-            subject = self.subject_entry.get().strip()
-            selected_grade = self.grade_var.get()
-            grade_points = grade_to_gpa[selected_grade]
-            credits = float(self.credits_entry.get())
-
-            if not subject or selected_grade == "Select Grade":
-                return messagebox.showerror("Error", "Please fill in all fields")
-
-            # Create new subject data
-            new_subject = {
-                "subject": subject,
-                "grade": selected_grade,
-                "gp": grade_points,
-                "credits": credits
-            }
-
-            # Update or add to subject_data
-            subject_exists = False
-            for i, existing_subject in enumerate(self.subject_data):
-                if existing_subject["subject"] == subject:
-                    self.subject_data[i] = new_subject
-                    subject_exists = True
-                    break
-                
-            
-            if not subject_exists:
-                self.subject_data.append(new_subject)
-
-            # Update sub_weight for pie chart
-            self.sub_weight[subject] = credits
-            self.gp_and_credits = [(i["gp"],i["credits"],i["subject"]) for i in self.subject_data]
-            
-
-            # Create visual elements
-            row_frame = ctk.CTkFrame(self.subjects_scrollable)
-            row_frame.pack(fill="x", pady=5)
-
-            # Create column frames
-            column_data = [
-                ("Subject", subject[0:15:1]),
-                ("Grade", selected_grade),
-                ("GP", f"{grade_points:.2f}"),
-                ("Credits", f"{credits:.1f}")
-            ]
-
-            max_width = 0
-            for col_title, col_value in column_data:
-                col_frame = ctk.CTkFrame(row_frame)
-                col_label = ctk.CTkLabel(col_frame, text=col_value, anchor="w")
-                col_label.pack(pady=2)
-                title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
-                title_label.pack(pady=2)
-                max_width = max(max_width, col_label.winfo_width(), title_label.winfo_width())
-            
-            # Second pass to create actual frames with consistent width
-            for col_title, col_value in column_data:
-                
-                if col_title == "Subject": 
-                    sub_label = ctk.CTkLabel(row_frame, text=col_value, font=ctk.CTkFont("Roboto", 15, "bold"))
-                    sub_label.pack(anchor="w", padx=10)
-                elif col_title == "Grade":
-                    col_frame = ctk.CTkFrame(row_frame, width=max_width, fg_color=self.grade_colors[col_value])
-                    col_frame.pack(side="left", padx=10, fill="x")
-                    col_label = ctk.CTkLabel(col_frame, text=col_value, anchor="w")
-                    col_label.pack(pady=2)
-                    title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
-                    title_label.pack(pady=2)
-                else:
-                    col_frame = ctk.CTkFrame(row_frame, width=max_width+20)
-                    col_frame.pack(side="left", padx=10)
-                    col_label = ctk.CTkLabel(col_frame, text=col_value, anchor="w")
-                    col_label.pack(pady=2)
-                    title_label = ctk.CTkLabel(col_frame, text=col_title, font=("Arial", 10))
-                    title_label.pack(pady=2)
-            
-            # Add delete button
-            # chek
-            delete_btn = ctk.CTkButton(row_frame, text="Delete", width=60,
-                        command=lambda row=row_frame, 
-                        subject=subject: self.delete_subject(row, subject), 
-                        fg_color=self.COLORS["red"]["main"], hover_color=self.COLORS["red"]["hover"])
-            delete_btn.pack(side="right", padx=20)
-            
-            # Clear entries
-            self.subject_entry.delete(0, 'end')
-            self.credits_entry.delete(0, 'end')
-            self.grade_var.set("Select Grade")
-            
-            # Update calculations and save
-            self.calculate_gpa(self.gp_and_credits)
-            self.draw_pie_chart(self.sub_weight)
-            self.save_subjects_to_json("subject_data.json", self.subject_data)
-
-        except ValueError:
-            messagebox.showerror("Error", "Credits must be a valid number")
-        except KeyError:
-            messagebox.showerror("Error", "Please select a valid grade")
-    
-    def delete_subject(self, row, subject):
-        # Remove the subject from the sub_weight dictionary
-        if subject in self.sub_weight:
-            del self.sub_weight[subject]          
-
-        # Remove the subject's grade points and credits from gp_and_credits list
-        for pair in self.gp_and_credits:
-            if pair[2] == subject:
-                self.gp_and_credits.remove(pair)
-                break
-
-        # Remove from subject_data list
-        self.subject_data = [item for item in self.subject_data if item["subject"] != subject]
+        # Buttons frame
+        button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        button_frame.pack(pady=(20, 0), fill="x")
         
-        # Save updated data to JSON file
-        self.save_subjects_to_json("subject_data.json", self.subject_data)
-
-        # Destroy the row frame
-        row.destroy()
-
-        # Recalculate GPA
-        self.calculate_gpa(self.gp_and_credits)
-
-        # Redraw the pie chart
-        self.draw_pie_chart(self.sub_weight)
-    
-    def calculate_gpa(self, gp_and_credits: list):
-        total_points = 0
-        total_credits = 0
+        # Cancel button
+        ctk.CTkButton(
+            button_frame,
+            text="Cancel",
+            width=140,
+            height=40,
+            fg_color=self.COLORS["red"]["main"],
+            hover_color=self.COLORS["red"]["hover"],
+            command=self.input_window.destroy
+        ).pack(side="left", padx=5)
         
-        
-        for pair in gp_and_credits:
-            total_points += pair[0] * pair[1]
-            total_credits += pair[1]
-        
-        if total_credits > 0:
-            gpa = total_points / total_credits
-            self.gpa_label.configure(text=f"GPA: {gpa:.2f}")
-    
+        # Add button
+        ctk.CTkButton(
+            button_frame,
+            text="Add Subject",
+            width=140,
+            height=40,
+            fg_color=self.COLORS["green"]["main"],
+            hover_color=self.COLORS["green"]["hover"],
+            command=self.add_subject
+        ).pack(side="right", padx=5)
+
+
+
+
+
+
+
+
+
+
+
+
+
     # POMODORO TIMER
     def setup_pomodoro_timer(self):
         tab = self.tabview.tab("Pomodoro Timer")
@@ -1014,6 +1389,16 @@ class SOLARIS(ctk.CTk):
         separator.pack(fill="x", padx=5)
 
 
+
+
+
+
+
+
+
+
+
+
     # TO-DO LIST
     def setup_todo_list(self):
         tab = self.tabview.tab("To-Do List")
@@ -1314,6 +1699,112 @@ class SOLARIS(ctk.CTk):
     def save_tasks(self):
         with open("tasks.json", "w") as file:
             json.dump({"tasks": list(self.tasks.values())}, file, indent=4)
+    
+
+    def setup_settings(self):
+        """Setup the Settings tab with appearance and scaling controls"""
+        tab = self.tabview.tab("Settings")
+        
+        # Main settings container with padding
+        settings_container = ctk.CTkFrame(tab)
+        settings_container.pack(padx=20, pady=20, fill="both", expand=True)
+        
+        # Load saved settings
+        saved_settings = self.settings_manager.load_settings()
+        self.current_theme = saved_settings["theme"]
+        self.current_scaling = saved_settings["scaling"]
+        
+        # === Appearance Settings Section ===
+        appearance_frame = ctk.CTkFrame(settings_container)
+        appearance_frame.pack(padx=10, pady=10, fill="x")
+        
+        ctk.CTkLabel(appearance_frame, text="Appearance Settings", 
+                    font=ctk.CTkFont(size=20, weight="bold")).pack(padx=10, pady=10)
+        
+        # Theme Selection
+        theme_frame = ctk.CTkFrame(appearance_frame)
+        theme_frame.pack(padx=10, pady=5, fill="x")
+        
+        ctk.CTkLabel(theme_frame, text="Theme Mode:").pack(side="left", padx=10)
+        self.theme_var = ctk.StringVar(value="Dark" if self.current_theme == "dark" else "Light")
+        theme_switch = ctk.CTkSwitch(theme_frame, text="Dark Mode", 
+                                    command=self.toggle_theme,
+                                    variable=self.theme_var, onvalue="Dark", offvalue="Light")
+        theme_switch.pack(side="left", padx=10)
+        
+        # === Scaling Settings Section ===
+        scaling_frame = ctk.CTkFrame(settings_container)
+        scaling_frame.pack(padx=10, pady=10, fill="x")
+        
+        ctk.CTkLabel(scaling_frame, text="Interface Scaling", 
+                    font=ctk.CTkFont(size=20, weight="bold")).pack(padx=10, pady=10)
+        
+        scale_frame = ctk.CTkFrame(scaling_frame)
+        scale_frame.pack(padx=10, pady=5, fill="x")
+        
+        ctk.CTkLabel(scale_frame, text="Widget Scale:").pack(side="left", padx=10)
+        
+        def update_scaling(value):
+            """Update the widget scaling"""
+            self.current_scaling = float(value)
+            ctk.set_widget_scaling(self.current_scaling)
+            scale_label.configure(text=f"{self.current_scaling:.1f}x")
+        
+        self.scale_slider = ctk.CTkSlider(scale_frame, from_=0.8, to=1.6, 
+                                        command=update_scaling,
+                                        number_of_steps=8)
+        self.scale_slider.set(self.current_scaling)
+        self.scale_slider.pack(side="left", padx=10, fill="x", expand=True)
+        
+        scale_label = ctk.CTkLabel(scale_frame, text=f"{self.current_scaling:.1f}x")
+        scale_label.pack(side="left", padx=10)
+        
+        # === Buttons Frame ===
+        buttons_frame = ctk.CTkFrame(settings_container)
+        buttons_frame.pack(pady=20, fill="x")
+        
+        def apply_settings():
+            """Save settings and reload the application"""
+            settings = {
+                "theme": self.current_theme,
+                "scaling": self.current_scaling
+            }
+            
+            if self.settings_manager.save_settings(settings):
+                if messagebox.askyesno("Apply Settings", 
+                                    "Settings will be applied now. Continue?"):
+                    self.reload_application()
+        
+        def reset_settings():
+            """Reset all settings to default values"""
+            if messagebox.askyesno("Reset Settings", 
+                                "Are you sure you want to reset all settings to default?"):
+                # Reset to defaults
+                self.current_scaling = 1.3
+                self.current_theme = "dark"
+                
+                # Update UI
+                ctk.set_widget_scaling(1.3)
+                ctk.set_appearance_mode("dark")
+                
+                # Update controls
+                self.theme_var.set("Dark")
+                self.scale_slider.set(1.3)
+        
+        # Apply Button
+        apply_button = ctk.CTkButton(buttons_frame, text="Apply Settings",
+                                    command=apply_settings,
+                                    fg_color=self.COLORS["green"]["main"],
+                                    hover_color=self.COLORS["green"]["hover"])
+        apply_button.pack(side="right", padx=10)
+        
+        # Reset Button
+        reset_button = ctk.CTkButton(buttons_frame, text="Reset to Defaults",
+                                    command=reset_settings,
+                                    fg_color=self.COLORS["red"]["main"],
+                                    hover_color=self.COLORS["red"]["hover"])
+        reset_button.pack(side="right", padx=10)
+
 
 if __name__ == "__main__":
     app = SOLARIS()
