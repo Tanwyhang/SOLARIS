@@ -21,7 +21,8 @@ class SettingsManager:
         self.settings_file = "app_settings.json"
         self.default_settings = {
             "theme": "dark",
-            "scaling": 1.3
+            "scaling": 1.3,
+            "color_theme": "green"
         }
     
     def load_settings(self):
@@ -29,11 +30,16 @@ class SettingsManager:
         try:
             if os.path.exists(self.settings_file):
                 with open(self.settings_file, 'r') as f:
-                    return json.load(f)
-            return self.default_settings
+                    settings = json.load(f)
+                    # Ensure all default settings exist
+                    for key in self.default_settings:
+                        if key not in settings:
+                            settings[key] = self.default_settings[key]
+                    return settings
+            return self.default_settings.copy()
         except Exception as e:
             print(f"Error loading settings: {e}")
-            return self.default_settings
+            return self.default_settings.copy()
     
     def save_settings(self, settings):
         """Save settings to file"""
@@ -57,30 +63,52 @@ class SOLARIS(ctk.CTk):
         # Initialize settings variables
         self.current_theme = saved_settings["theme"]
         self.current_scaling = saved_settings["scaling"]
+        self.current_color_theme = saved_settings.get("color_theme", "green")
 
-        self.theme_colors = {
-            1: "#F0F7F0",  # Light milky green
-            2: "#E7F0E7",  # Slightly darker milky green
-            3: "#DDE8DD",  # Slightly more saturated green
-            4: "#D4E1D4",  # Deeper green
-            5: "#CBD9CB",  # Darker, more earthy green
-            6: "#C2D2C2",  # Continued darkening of the green
-            7: "#B9CDB9",  # Even deeper green
-            8: "#B0C7B0",  # Darker, more muted green
-            9: "#A7C2A7",  # Slightly lighter, but still deep green
-            10: "#9EBCA0",  # Continued darkening of the green
-            11: "#95B69B",  # Darker, more saturated green
-            12: "#8CB196",  # Deeper, more earthy green
-            13: "#84AC91",  # Slightly lighter, but still deep green
-            14: "#7BA78C",  # Darker, more muted green
-            15: "#72A387",  # Deeper, more saturated green
-            16: "#699E83",  # Darker, more earthy green
-            17: "#60987F",  # Slightly lighter, but still deep green
-            18: "#57937A",  # Darker, more muted green
-            19: "#4E8D75",  # Deeper, more saturated green
-            20: "#458870",   # Darkest, most earthy green
-            21: "#03543c" # extra dark for text
+        self.COLOR_THEMES = {
+            "green": {
+                1: "#F0F7F0", 2: "#E7F0E7", 3: "#DDE8DD", 4: "#D4E1D4", 
+                5: "#CBD9CB", 6: "#C2D2C2", 7: "#B9CDB9", 8: "#B0C7B0",
+                9: "#A7C2A7", 10: "#9EBCA0", 11: "#95B69B", 12: "#8CB196",
+                13: "#84AC91", 14: "#7BA78C", 15: "#72A387", 16: "#699E83",
+                17: "#60987F", 18: "#57937A", 19: "#4E8D75", 20: "#458870",
+                21: "#03543c"
+            },
+            "blue": {
+                1: "#F0F4F7", 2: "#E7EDF0", 3: "#DDE5E8", 4: "#D4DEE1", 
+                5: "#CBD6D9", 6: "#C2CFD2", 7: "#B9C7CD", 8: "#B0C0C7",
+                9: "#A7B9C2", 10: "#9EB2BC", 11: "#95ABB6", 12: "#8CA4B1",
+                13: "#849DAC", 14: "#7B96A7", 15: "#728FA2", 16: "#69889D",
+                17: "#608198", 18: "#577A93", 19: "#4E738E", 20: "#456C89",
+                21: "#033c54"
+            },
+            "purple": {
+                1: "#F5F0F7", 2: "#EDE7F0", 3: "#E4DDE8", 4: "#DCD4E1", 
+                5: "#D3CBD9", 6: "#CBC2D2", 7: "#C2B9CD", 8: "#BAB0C7",
+                9: "#B1A7C2", 10: "#A99EBC", 11: "#A095B6", 12: "#988CB1",
+                13: "#8F84AC", 14: "#877BA7", 15: "#7E72A2", 16: "#76699D",
+                17: "#6D6098", 18: "#655793", 19: "#5C4E8E", 20: "#544589",
+                21: "#3c0354"
+            },
+            "pink": {
+                1: "#F7F0F4", 2: "#F0E7ED", 3: "#E8DDE5", 4: "#E1D4DE", 
+                5: "#D9CBD6", 6: "#D2C2CF", 7: "#CDB9C7", 8: "#C7B0C0",
+                9: "#C2A7B9", 10: "#BC9EB2", 11: "#B695AB", 12: "#B18CA4",
+                13: "#AC849D", 14: "#A77B96", 15: "#A2728F", 16: "#9D6988",
+                17: "#986081", 18: "#93577A", 19: "#8E4E73", 20: "#89456C",
+                21: "#54033c"
+            },
+            "red": {
+                1: "#F7F0F0", 2: "#F0E7E7", 3: "#E8DDDD", 4: "#E1D4D4", 
+                5: "#D9CBCB", 6: "#D2C2C2", 7: "#CDB9B9", 8: "#C7B0B0",
+                9: "#C2A7A7", 10: "#BC9E9E", 11: "#B69595", 12: "#B18C8C",
+                13: "#AC8484", 14: "#A77B7B", 15: "#A27272", 16: "#9D6969",
+                17: "#986060", 18: "#935757", 19: "#8E4E4E", 20: "#894545",
+                21: "#540303"
+            }
         }
+
+        # assigning structure : self.COLOR_THEMES[self.current_color_theme][19]
 
 
 
@@ -128,6 +156,91 @@ class SOLARIS(ctk.CTk):
         self.show_splash_screen()
         # Schedule the main UI setup after splash screen
         self.after(2000, self.setup_main_ui)
+    
+    def get_theme_colors(self, theme="green"):
+        theme_colors = {
+            "green": [
+                # Base Color: #418c65 (Muted green)
+                '#ffffff', '#f4faf5', '#e9f5ea', '#dff0e0', '#d4ead6', 
+                '#c9e4cc', '#bedfc2', '#b3d9b8', '#a8d3ae', '#9dcea4', 
+                '#92c89a', '#87c290', '#7cbc86', '#71b67c', '#418c65',
+                
+                # Base Color: #2c5e46 (Deep forest green)
+                '#ffffff', '#f2f7f4', '#e6efea', '#dae7e0', '#cedfd6', 
+                '#c2d7cc', '#b6cfc2', '#aac7b8', '#9ebfae', '#92b7a4', 
+                '#86af9a', '#7aa790', 
+                
+                # Base Color: #134a3f (Dark teal)
+                '#ffffff', '#f0f5f4', '#e1ebe9', '#d2e1de', '#c3d7d3', 
+                '#b4cdc8', '#a5c3bd', '#96b9b2', '#87afa7', '#78a59c'
+            ][::-2],
+            
+            "blue": [
+                # Base Color: #4165A4 (Muted blue)
+                '#ffffff', '#f4f6fa', '#e9edf5', '#dfe3f0', '#d4d9ea', 
+                '#c9cfe4', '#bec5df', '#b3bbd9', '#a8b1d3', '#9da7ce', 
+                '#929dc8', '#8793c2', '#7c89bc', '#717fb6', '#4165A4',
+                
+                # Base Color: #2C4682 (Deep blue)
+                '#ffffff', '#f2f4f7', '#e6e9ef', '#dadee7', '#ced3df', 
+                '#c2c8d7', '#b6bdcf', '#aab2c7', '#9ea7bf', '#929cb7', 
+                '#8691af', '#7a86a7',
+                
+                # Base Color: #132C60 (Dark blue)
+                '#ffffff', '#f0f2f5', '#e1e5eb', '#d2d8e1', '#c3cbd7', 
+                '#b4becd', '#a5b1c3', '#96a4b9', '#8797af', '#788aa5'
+            ][::-2],
+            
+            "purple": [
+                # Base Color: #7841A4 (Muted purple)
+                '#ffffff', '#f7f4fa', '#efe9f5', '#e7dff0', '#dfd4ea', 
+                '#d7c9e4', '#cfbedf', '#c7b3d9', '#bfa8d3', '#b79dce', 
+                '#af92c8', '#a787c2', '#9f7cbc', '#9771b6', '#7841A4',
+                
+                # Base Color: #522C82 (Deep purple)
+                '#ffffff', '#f4f2f7', '#e9e6ef', '#dedae7', '#d3cedf', 
+                '#c8c2d7', '#bdb6cf', '#b2aac7', '#a79ebf', '#9c92b7', 
+                '#9186af', '#867aa7',
+                
+                # Base Color: #2C1360 (Dark purple)
+                '#ffffff', '#f2f0f5', '#e5e1eb', '#d8d2e1', '#cbc3d7', 
+                '#beb4cd', '#b1a5c3', '#a496b9', '#9787af', '#8a78a5'
+            ][::-2],
+            
+            "red": [
+                # Base Color: #A44141 (Muted red)
+                '#ffffff', '#faf4f4', '#f5e9e9', '#f0dfdf', '#ead4d4', 
+                '#e4c9c9', '#dfbebe', '#d9b3b3', '#d3a8a8', '#ce9d9d', 
+                '#c89292', '#c28787', '#bc7c7c', '#b67171', '#A44141',
+                
+                # Base Color: #822C2C (Deep red)
+                '#ffffff', '#f7f2f2', '#efe6e6', '#e7dada', '#dfcece', 
+                '#d7c2c2', '#cfb6b6', '#c7aaaa', '#bf9e9e', '#b79292', 
+                '#af8686', '#a77a7a',
+                
+                # Base Color: #601313 (Dark red)
+                '#ffffff', '#f5f0f0', '#ebe1e1', '#e1d2d2', '#d7c3c3', 
+                '#cdb4b4', '#c3a5a5', '#b99696', '#af8787', '#a57878'
+            ][::-2],
+            
+            "pink": [
+                # Base Color: #A44165 (Muted pink)
+                '#ffffff', '#faf4f6', '#f5e9ed', '#f0dfe3', '#ead4d9', 
+                '#e4c9cf', '#dfbec5', '#d9b3bb', '#d3a8b1', '#ce9da7', 
+                '#c8929d', '#c28793', '#bc7c89', '#b6717f', '#A44165',
+                
+                # Base Color: #822C46 (Deep pink)
+                '#ffffff', '#f7f2f4', '#efe6e9', '#e7dade', '#dfced3', 
+                '#d7c2c8', '#cfb6bd', '#c7aab2', '#bf9ea7', '#b7929c', 
+                '#af8691', '#a77a86',
+                
+                # Base Color: #601328 (Dark pink)
+                '#ffffff', '#f5f0f2', '#ebe1e5', '#e1d2d8', '#d7c3cb', 
+                '#cdb4be', '#c3a5b1', '#b996a4', '#af8797', '#a5788a'
+            ][::-2]
+        }
+        
+        return theme_colors.get(theme, theme_colors["green"])
 
     def show_splash_screen(self):
         # Create splash screen frame
@@ -203,7 +316,7 @@ class SOLARIS(ctk.CTk):
         tab = self.tabview.tab("GPA Calculator")
         
         # Main container
-        main_container = ctk.CTkFrame(tab, fg_color=self.theme_colors[10])
+        main_container = ctk.CTkFrame(tab, fg_color=self.COLOR_THEMES[self.current_color_theme][10])
         main_container.pack(fill="both", expand=True, padx=10, pady=0)
         
         # Configure grid for three columns
@@ -222,39 +335,39 @@ class SOLARIS(ctk.CTk):
         
         # Semester selection header
         ctk.CTkLabel(semester_frame, text="Semesters", 
-                    font=("Roboto", 20, "bold"), text_color=self.theme_colors[21]).pack(pady=10)
+                    font=("Roboto", 20, "bold"), text_color=self.COLOR_THEMES[self.current_color_theme][21]).pack(pady=10)
         
         # Add semester button
         add_sem_btn = ctk.CTkButton(semester_frame, text="Add Next Semester",
-                                command=self.add_new_semester, fg_color=self.theme_colors[16], hover_color=self.theme_colors[18], text_color=self.theme_colors[1], font=ctk.CTkFont(weight="bold"))
+                                command=self.add_new_semester, fg_color=self.COLOR_THEMES[self.current_color_theme][16], hover_color=self.COLOR_THEMES[self.current_color_theme][18], text_color=self.COLOR_THEMES[self.current_color_theme][1], font=ctk.CTkFont(weight="bold"))
         add_sem_btn.pack(pady=5)
         
         # Semester list (scrollable)
-        self.semester_list = ctk.CTkScrollableFrame(semester_frame, fg_color=self.theme_colors[5])
+        self.semester_list = ctk.CTkScrollableFrame(semester_frame, fg_color=self.COLOR_THEMES[self.current_color_theme][5])
         self.semester_list.pack(fill="both", expand=True, padx=5, pady=5)
         
         # Middle panel - Subject Display
-        middle_frame = ctk.CTkFrame(main_container, fg_color=self.theme_colors[13])
+        middle_frame = ctk.CTkFrame(main_container, fg_color=self.COLOR_THEMES[self.current_color_theme][13])
         middle_frame.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
         middle_frame.grid_columnconfigure(0, weight=1)  # Allow middle frame content to resize
         
         
         # Subjects scrollable frame
-        self.subjects_scrollable = ctk.CTkScrollableFrame(middle_frame, fg_color=self.theme_colors[7])
+        self.subjects_scrollable = ctk.CTkScrollableFrame(middle_frame, fg_color=self.COLOR_THEMES[self.current_color_theme][7])
         self.subjects_scrollable.pack(fill="both", expand=True, padx=10, pady=10)
         self.show_add_new_subject_btn()
         
         # GPA display
         self.gpa_label = ctk.CTkLabel(middle_frame, text="GPA: 0.00", 
-                                    font=("Roboto", 30, "bold"), text_color=self.theme_colors[21])
+                                    font=("Roboto", 30, "bold"), text_color=self.COLOR_THEMES[self.current_color_theme][21])
         self.gpa_label.pack(pady=10)
         
         # Right panel - Pie Chart
-        chart_frame = ctk.CTkFrame(main_container, fg_color=self.theme_colors[7])
+        chart_frame = ctk.CTkFrame(main_container, fg_color=self.COLOR_THEMES[self.current_color_theme][7])
         chart_frame.grid(row=0, column=2, sticky="nsew", padx=10, pady=5)
         
         self.animation_progress = 0
-        self.pie_chart = ctk.CTkCanvas(chart_frame, background=self.theme_colors[7], 
+        self.pie_chart = ctk.CTkCanvas(chart_frame, background=self.COLOR_THEMES[self.current_color_theme][7], 
                                     highlightthickness=0)
         self.pie_chart.pack(padx=25, pady=25, expand=True, fill="both")
         
@@ -331,15 +444,15 @@ class SOLARIS(ctk.CTk):
             gradient_index = int(((math.sin(sine_index) + 1) * 5) * 1) + 5
             
             semester_frame = ctk.CTkFrame(self.semester_list, 
-                                        fg_color=self.theme_colors[min(gradient_index, 20)])
+                                        fg_color=self.COLOR_THEMES[self.current_color_theme][min(gradient_index, 20)])
             semester_frame.pack(fill="x", pady=2)
             
             btn = ctk.CTkButton(semester_frame, 
                             text=semester_name,
                             command=lambda s=semester_name: self.switch_semester(s),
-                            fg_color=self.theme_colors[min(gradient_index + 1, len(self.theme_colors))],
-                            hover_color=self.theme_colors[20],
-                            text_color=self.theme_colors[1], font=ctk.CTkFont(weight="bold"))
+                            fg_color=self.COLOR_THEMES[self.current_color_theme][min(gradient_index + 1, len(self.COLOR_THEMES[self.current_color_theme]))],
+                            hover_color=self.COLOR_THEMES[self.current_color_theme][20],
+                            text_color=self.COLOR_THEMES[self.current_color_theme][1], font=ctk.CTkFont(weight="bold"))
             btn.pack(side="left", expand=True, fill="x", padx=2)
             
             del_btn = ctk.CTkButton(semester_frame, 
@@ -473,11 +586,11 @@ class SOLARIS(ctk.CTk):
 
     def display_subject(self, subject_info):
         # Create main card frame
-        card = ctk.CTkFrame(self.subjects_scrollable, fg_color=self.theme_colors[5], corner_radius=10)
+        card = ctk.CTkFrame(self.subjects_scrollable, fg_color=self.COLOR_THEMES[self.current_color_theme][5], corner_radius=10)
         card.pack(fill="x", padx=10, pady=5)
         
         # Header frame
-        header = ctk.CTkFrame(card, fg_color=self.theme_colors[17], corner_radius=6)
+        header = ctk.CTkFrame(card, fg_color=self.COLOR_THEMES[self.current_color_theme][17], corner_radius=6)
         header.pack(fill="x", padx=5, pady=5)
         
         # Subject title in header
@@ -486,7 +599,7 @@ class SOLARIS(ctk.CTk):
             text=subject_info["subject"],
             font=("Roboto", 16, "bold"),
             anchor="w",
-            text_color=self.theme_colors[3]
+            text_color=self.COLOR_THEMES[self.current_color_theme][3]
         )
         subject_label.pack(side="left", padx=10)
         
@@ -501,7 +614,7 @@ class SOLARIS(ctk.CTk):
             width=30,
             command=lambda: self.edit_subject(card, subject_info),
             fg_color="transparent",
-            hover_color=self.theme_colors[10]
+            hover_color=self.COLOR_THEMES[self.current_color_theme][10]
         )
         edit_btn.pack(side="left", padx=2)
         
@@ -512,7 +625,7 @@ class SOLARIS(ctk.CTk):
             width=30,
             command=lambda s=subject_info["subject"]: self.delete_subject(s),
             fg_color="transparent",
-            hover_color=self.theme_colors[10]
+            hover_color=self.COLOR_THEMES[self.current_color_theme][10]
         )
         delete_btn.pack(side="left" , padx=2)
         
@@ -531,7 +644,7 @@ class SOLARIS(ctk.CTk):
             frame = ctk.CTkFrame(content, fg_color="transparent")
             frame.pack(side="left", expand=True, fill="x", padx=5)
             
-            value_label = ctk.CTkLabel(frame, text=value, font=("Roboto", 24, "bold"), text_color=self.theme_colors[21])
+            value_label = ctk.CTkLabel(frame, text=value, font=("Roboto", 24, "bold"), text_color=self.COLOR_THEMES[self.current_color_theme][21])
             value_label.pack()
             
             title_label = ctk.CTkLabel(
@@ -697,21 +810,7 @@ class SOLARIS(ctk.CTk):
         y = canvas_height // 2
         radius = min(canvas_width, canvas_height) // 2 - 20
         
-        colors = [
-            # Base Color: #418c65 (Muted green)
-            '#ffffff', '#f4faf5', '#e9f5ea', '#dff0e0', '#d4ead6', 
-            '#c9e4cc', '#bedfc2', '#b3d9b8', '#a8d3ae', '#9dcea4', 
-            '#92c89a', '#87c290', '#7cbc86', '#71b67c', '#418c65',
-            
-            # Base Color: #2c5e46 (Deep forest green)
-            '#ffffff', '#f2f7f4', '#e6efea', '#dae7e0', '#cedfd6', 
-            '#c2d7cc', '#b6cfc2', '#aac7b8', '#9ebfae', '#92b7a4', 
-            '#86af9a', '#7aa790', 
-            
-            # Base Color: #134a3f (Dark teal)
-            '#ffffff', '#f0f5f4', '#e1ebe9', '#d2e1de', '#c3d7d3', 
-            '#b4cdc8', '#a5c3bd', '#96b9b2', '#87afa7', '#78a59c', 
-        ][::-2]
+        colors = self.get_theme_colors(self.current_color_theme)
         
         # Store arc and legend items for animation
         self.pie_items = []
@@ -777,7 +876,7 @@ class SOLARIS(ctk.CTk):
                     legend_x - 110 - (3 * len(subject)), 
                     legend_y + i * 30 + 10,
                     text=f"{subject} ({percentage:.1f}%)", 
-                    fill=self.theme_colors[21],
+                    fill=self.COLOR_THEMES[self.current_color_theme][21],
                     font=("Arial", 12, "bold")
                 )
         
@@ -808,7 +907,7 @@ class SOLARIS(ctk.CTk):
             self._tooltip_id = self.pie_chart.create_text(
                 self._tooltip_x, self._tooltip_y,
                 text=text,
-                fill=self.theme_colors[21],
+                fill=self.COLOR_THEMES[self.current_color_theme][21],
                 font=("Arial", 15, "bold"),
                 anchor="w"
             )
@@ -875,8 +974,8 @@ class SOLARIS(ctk.CTk):
             command=self.show_add_subject_window,
             height=40,
             font=("Roboto", 14, "bold"),
-            fg_color=self.theme_colors[18],
-            hover_color=self.theme_colors[20]
+            fg_color=self.COLOR_THEMES[self.current_color_theme][18],
+            hover_color=self.COLOR_THEMES[self.current_color_theme][20]
         )
         self.add_new_subject_btn.pack(padx=20, pady=15)
 
@@ -1714,6 +1813,7 @@ class SOLARIS(ctk.CTk):
         saved_settings = self.settings_manager.load_settings()
         self.current_theme = saved_settings["theme"]
         self.current_scaling = saved_settings["scaling"]
+        self.current_color_theme = saved_settings.get("color_theme", "green")
         
         # === Appearance Settings Section ===
         appearance_frame = ctk.CTkFrame(settings_container)
@@ -1732,6 +1832,46 @@ class SOLARIS(ctk.CTk):
                                     command=self.toggle_theme,
                                     variable=self.theme_var, onvalue="Dark", offvalue="Light")
         theme_switch.pack(side="left", padx=10)
+        
+        # Color Theme Selection
+        color_theme_frame = ctk.CTkFrame(appearance_frame)
+        color_theme_frame.pack(padx=10, pady=10, fill="x")
+        
+        ctk.CTkLabel(color_theme_frame, text="Color Theme:", 
+                    font=ctk.CTkFont(size=16, weight="bold")).pack(padx=10, pady=(10,5))
+        
+        # Create a frame for color theme options
+        options_frame = ctk.CTkFrame(color_theme_frame)
+        options_frame.pack(padx=10, pady=5, fill="x")
+        
+        self.color_theme_var = ctk.StringVar(value=self.current_color_theme)
+        
+        def change_color_theme():
+            """Update the current color theme"""
+            self.current_color_theme = self.color_theme_var.get()
+            self.COLOR_THEMES[self.current_color_theme] = self.COLOR_THEMES[self.current_color_theme]
+            
+            # Update preview colors
+            for btn, theme_name in theme_buttons:
+                btn.configure(fg_color=self.COLOR_THEMES[theme_name][15])
+        
+        # Create theme buttons with color preview
+        theme_buttons = []
+        for theme_name in ["green", "blue", "purple", "pink", "red"]:
+            btn_frame = ctk.CTkFrame(options_frame)
+            btn_frame.pack(side="left", padx=5, pady=5, expand=True)
+            
+            radio_btn = ctk.CTkRadioButton(
+                btn_frame,
+                text=theme_name.capitalize(),
+                variable=self.color_theme_var,
+                value=theme_name,
+                command=change_color_theme,
+                fg_color=self.COLOR_THEMES[theme_name][15],
+                hover_color=self.COLOR_THEMES[theme_name][17]
+            )
+            radio_btn.pack(padx=5, pady=5)
+            theme_buttons.append((radio_btn, theme_name))
         
         # === Scaling Settings Section ===
         scaling_frame = ctk.CTkFrame(settings_container)
@@ -1768,7 +1908,8 @@ class SOLARIS(ctk.CTk):
             """Save settings and reload the application"""
             settings = {
                 "theme": self.current_theme,
-                "scaling": self.current_scaling
+                "scaling": self.current_scaling,
+                "color_theme": self.current_color_theme
             }
             
             if self.settings_manager.save_settings(settings):
@@ -1783,6 +1924,8 @@ class SOLARIS(ctk.CTk):
                 # Reset to defaults
                 self.current_scaling = 1.3
                 self.current_theme = "dark"
+                self.current_color_theme = "green"
+                self.COLOR_THEMES[self.current_color_theme] = self.COLOR_THEMES["green"]
                 
                 # Update UI
                 ctk.set_widget_scaling(1.3)
@@ -1791,19 +1934,21 @@ class SOLARIS(ctk.CTk):
                 # Update controls
                 self.theme_var.set("Dark")
                 self.scale_slider.set(1.3)
+                self.color_theme_var.set("green")
+                change_color_theme()  # Update color theme preview
         
         # Apply Button
         apply_button = ctk.CTkButton(buttons_frame, text="Apply Settings",
                                     command=apply_settings,
-                                    fg_color=self.COLORS["green"]["main"],
-                                    hover_color=self.COLORS["green"]["hover"])
+                                    fg_color=self.COLOR_THEMES[self.current_color_theme][15],
+                                    hover_color=self.COLOR_THEMES[self.current_color_theme][17])
         apply_button.pack(side="right", padx=10)
         
         # Reset Button
         reset_button = ctk.CTkButton(buttons_frame, text="Reset to Defaults",
                                     command=reset_settings,
-                                    fg_color=self.COLORS["red"]["main"],
-                                    hover_color=self.COLORS["red"]["hover"])
+                                    fg_color=self.COLOR_THEMES[self.current_color_theme][19],
+                                    hover_color=self.COLOR_THEMES[self.current_color_theme][20])
         reset_button.pack(side="right", padx=10)
 
 

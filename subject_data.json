@@ -3,12 +3,6 @@
         "Semester 5": {
             "subjects": [
                 {
-                    "subject": "Advanced Machine Learning",
-                    "grade": "A",
-                    "gp": 4.0,
-                    "credits": 5.0
-                },
-                {
                     "subject": "Natural Language Processing",
                     "grade": "A-",
                     "gp": 3.7,
@@ -17,13 +11,13 @@
                 {
                     "subject": "Research Methodology",
                     "grade": "B+",
-                    "gp": 3.5,
-                    "credits": 3.0
+                    "gp": 3.33,
+                    "credits": 10.0
                 },
                 {
                     "subject": "Advanced Database Systems",
-                    "grade": "B",
-                    "gp": 3.0,
+                    "grade": "A+",
+                    "gp": 4.0,
                     "credits": 4.0
                 },
                 {
@@ -45,7 +39,7 @@
                     "credits": 6.0
                 }
             ],
-            "gpa": 3.72
+            "gpa": 3.037037037037037
         },
         "Semester 6": {
             "subjects": [
@@ -87,6 +81,45 @@
                 }
             ],
             "gpa": 3.65
+        },
+        "Semester 7": {
+            "subjects": [
+                {
+                    "subject": "ENGLISH",
+                    "grade": "A+",
+                    "gp": 4.0,
+                    "credits": 3.0
+                },
+                {
+                    "subject": "CA",
+                    "grade": "A+",
+                    "gp": 4.0,
+                    "credits": 3.0
+                },
+                {
+                    "subject": "PROGRAMMING",
+                    "grade": "A+",
+                    "gp": 4.0,
+                    "credits": 3.0
+                },
+                {
+                    "subject": "Etika",
+                    "grade": "B+",
+                    "gp": 3.33,
+                    "credits": 3.0
+                },
+                {
+                    "subject": "MATH",
+                    "grade": "A+",
+                    "gp": 4.0,
+                    "credits": 3.0
+                }
+            ],
+            "gpa": 3.866
+        },
+        "Semester 8": {
+            "subjects": [],
+            "gpa": 0.0
         }
     }
 }
