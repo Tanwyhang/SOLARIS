@@ -486,7 +486,9 @@ class SOLARIS(ctk.CTk):
                                 text="×",
                                 width=30,
                                 command=lambda s=semester_name: self.delete_semester(s),
-                                fg_color="#a82835")
+                                fg_color=self.COLORS['red']['main'],
+                                hover_color=self.COLORS['red']['hover']
+                                )
             del_btn.pack(side="right", padx=2)
 
     def switch_semester(self, semester_name):
@@ -527,8 +529,7 @@ class SOLARIS(ctk.CTk):
 
     def add_subject(self):
         if not self.current_semester:
-            messagebox.showerror("Error", "Please select or create a semester first")
-            return
+            return messagebox.showerror("Error", "Please select or create a semester first")
         
         grade_to_gpa = {
             "A+": 4.0, "A": 4.0, "A-": 3.75,
@@ -538,13 +539,27 @@ class SOLARIS(ctk.CTk):
 
         try:
             # Get and validate input values
-            subject = self.subject_entry.get().strip()
-            selected_grade = self.grade_var.get()
-            grade_points = grade_to_gpa[selected_grade]
-            credits = float(self.credits_entry.get())
+            subject = self.subject_entry.get().strip() if self.subject_entry.get().strip() else False
+            selected_grade = self.grade_var.get() if self.grade_var.get() != "Select Grade" else False
+            grade_points = grade_to_gpa[selected_grade] if selected_grade else False
+            credits = self.credits_entry.get() if self.credits_entry.get() else False
 
-            if not subject or selected_grade == "Select Grade":
-                return messagebox.showerror("Error", "Please fill in all fields")
+            if all([not subject, not selected_grade, not credits]):
+                return messagebox.showerror("Error", "ALL the fields are EMPTY!! \n Please fill in ALL the entry fields")
+            elif all([not subject, not selected_grade]):
+                return messagebox.showerror("Error", "Please fill in the SUBJECT NAME field \nand select a GRADE for the subject")
+            elif all([not subject, not credits]):
+                return messagebox.showerror("Error", "Please fill in the SUBJECT NAME field \nand select the CREDITS weighted for the subject")
+            elif all([not selected_grade, not credits]):
+                return messagebox.showerror("Error", "Please select a GRADE for the subject \nand select the CREDITS weighted for the subject")
+            elif not subject:
+                return messagebox.showerror("Error", "Please fill in the SUBJECT NAME field")
+            elif not selected_grade:
+                return messagebox.showerror("Error", "Please select a GRADE for the subject")
+            elif not credits:
+                return messagebox.showerror("Error", "Please fill in the CREDITS field")
+
+            credits = float(credits)
 
             # Create new subject data
             new_subject = {
@@ -661,7 +676,7 @@ class SOLARIS(ctk.CTk):
             width=30,
             command=lambda s=subject_info["subject"]: self.delete_subject(s),
             fg_color="transparent",
-            hover_color=self.COLOR_THEMES[self.current_color_theme][10]
+            hover_color=self.COLORS['red']['hover']
         )
         delete_btn.pack(side="left" , padx=2)
         
@@ -699,7 +714,7 @@ class SOLARIS(ctk.CTk):
             self.editing_subject = True
 
         # Create edit frame
-        edit_frame = ctk.CTkFrame(card_frame, fg_color="#333333")
+        edit_frame = ctk.CTkFrame(card_frame, fg_color=self.COLOR_THEMES[self.current_color_theme][3])
         edit_frame.pack(fill="x", padx=15, pady=10)
         
         # Grade dropdown
@@ -1764,7 +1779,7 @@ class SOLARIS(ctk.CTk):
                 command=lambda t=task: self.delete_task(t),
                 height=32,
                 fg_color="#dc3545",
-                hover_color="#a82835"
+                hover_color=self.COLORS['red']['hover']
             )
             delete_btn.pack(side="left")
         else:

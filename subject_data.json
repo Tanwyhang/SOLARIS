@@ -28,18 +28,18 @@
                 },
                 {
                     "subject": "damn",
-                    "grade": "B+",
-                    "gp": 3.33,
+                    "grade": "A+",
+                    "gp": 4.0,
                     "credits": 3.0
                 },
                 {
                     "subject": "damn 2",
                     "grade": "A",
                     "gp": 4.0,
-                    "credits": 5.0
+                    "credits": 12.0
                 }
             ],
-            "gpa": 3.7609523809523813
+            "gpa": 3.8885185185185187
         },
         "Semester 2": {
             "subjects": [
