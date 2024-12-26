@@ -16,6 +16,7 @@ import json
 from tkinter import messagebox
 
 
+# SOLARIS CLASS AND FUNCTIONS WRITTEN BY TANWYHANG with CONTRIBUTIONS FROM ANGKARWAI on TO-DO-LIST MANAGER function
 class SettingsManager:
     def __init__(self):
         self.settings_file = "app_settings.json"
@@ -51,7 +52,7 @@ class SettingsManager:
             print(f"Error saving settings: {e}")
             return False
 
-
+# CLASS AND FUNCTIONS WRITTEN BY TANWYHANG
 class SOLARIS(ctk.CTk):
     def __init__(self):
         super().__init__()
