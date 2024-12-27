@@ -3,12 +3,6 @@
         "Semester 1": {
             "subjects": [
                 {
-                    "subject": "Introduction to Computer Science",
-                    "grade": "A",
-                    "gp": 4.0,
-                    "credits": 3
-                },
-                {
                     "subject": "Calculus I",
                     "grade": "A-",
                     "gp": 3.75,
@@ -60,9 +54,15 @@
                     "grade": "A-",
                     "gp": 3.75,
                     "credits": 3
+                },
+                {
+                    "subject": "dwdwd",
+                    "grade": "A",
+                    "gp": 4.0,
+                    "credits": 8.0
                 }
             ],
-            "gpa": 3.68
+            "gpa": 3.8366666666666664
         }
     }
 }

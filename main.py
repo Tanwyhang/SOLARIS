@@ -2,6 +2,7 @@ import customtkinter as ctk
 import tkinter as tk
 from tkinter import messagebox
 import pywinstyles
+from PIL import Image, ImageTk
 import time
 import math
 import json
@@ -145,17 +146,18 @@ class SOLARIS(ctk.CTk):
         height = self.winfo_screenheight() 
         self.geometry(f"{width}x{height}")
 
-        
 
         pywinstyles.apply_style(self, "mica") # window 11 theme 
+
+
         ctk.set_default_color_theme("green") 
         ctk.set_appearance_mode(self.current_theme)
         ctk.set_widget_scaling(self.current_scaling)        
 
         # Show splash screen first
         self.show_splash_screen()
+        self.ui_set = False
         # Schedule the main UI setup after splash screen
-        self.after(2000, self.setup_main_ui)
     
     def get_theme_colors(self, theme="green"):
         theme_colors = {
@@ -242,37 +244,64 @@ class SOLARIS(ctk.CTk):
         
         return theme_colors.get(theme, theme_colors["green"])
 
+
     def show_splash_screen(self):
-        # Create splash screen frame
         self.splash_frame = ctk.CTkFrame(self)
         self.splash_frame.pack(fill="both", expand=True)
+        
+        # Load and resize image
+        self.splash_image = Image.open("intro.png")
+        screen_width = 1920
+        screen_height = 1080
+        self.splash_image = self.splash_image.resize((screen_width, screen_height), Image.Resampling.LANCZOS)
+        
+        # Create black canvas
+        self.splash_canvas = tk.Canvas(self.splash_frame, highlightthickness=0, bg='black',
+                                    width=screen_width, height=screen_height)
+        self.splash_canvas.pack(fill='both', expand=True)
+        
+        # Create hidden image
+        self.current_photo = ImageTk.PhotoImage(self.splash_image)
+        self.splash_id = self.splash_canvas.create_image(screen_width//2, screen_height//2, 
+                                                        image=self.current_photo, anchor='center')
+        self.splash_canvas.itemconfig(self.splash_id, state='hidden')
+        
+        # Start fade after 3 seconds
+        self.opacity = 0
+        self.bind('<Key>', lambda e: self.setup_main_ui())
+        self.after(2000, self.fade_in_splash)
+        
+
+    def fade_in_splash(self):
+
+        if not hasattr(self, 'splash_frame') or not self.splash_frame.winfo_exists():
+            return
+        
+        if self.opacity < 255:
+            # Quadratic easing
+            progress = self.opacity / 255
+            current_opacity = int(255 * (progress * progress))
             
-        # Configure grid for centering
-        self.splash_frame.grid_rowconfigure(0, weight=1)
-        self.splash_frame.grid_rowconfigure(2, weight=1)
-        self.splash_frame.grid_columnconfigure(0, weight=1)
+            # Update image opacity
+            transparent_image = Image.new('RGBA', self.splash_image.size, (0, 0, 0, 255 - current_opacity))
+            new_img = Image.alpha_composite(self.splash_image.convert('RGBA'), transparent_image)
+            self.current_photo = ImageTk.PhotoImage(new_img)
+            self.splash_canvas.itemconfig(self.splash_id, image=self.current_photo, state='normal')
             
-        # Add SOLARIS text
-        solaris_label = ctk.CTkLabel(
-            self.splash_frame,
-            text_color=self.COLOR_THEMES[self.current_color_theme][21],
-            text="SOLARIS",
-            font=("Roboto", 48, "bold")
-        )
-        solaris_label.grid(row=1, column=0, pady=(0, 20))
-            
-        # Add "powered by" text
-        powered_by_label = ctk.CTkLabel(
-            self.splash_frame,
-            text_color=self.COLOR_THEMES[self.current_color_theme][20],
-            text="powered by Wy",
-            font=("Roboto", 24)
-        )
-        powered_by_label.grid(row=2, column=0)
+            self.opacity += 5
+            self.after(20, self.fade_in_splash)
         
     def setup_main_ui(self):
+
+        self.ui_set = True
         # Remove splash screen
         self.splash_frame.destroy()
+        
+        self.unbind('<Key>')
+
+        # PRELOAD DATA
+        self.current_semester = None
+        self.semesters = self.load_subjects_from_json("subject_data.json")
             
         # Configure grid
         self.grid_rowconfigure(0, weight=1)
@@ -357,7 +386,7 @@ class SOLARIS(ctk.CTk):
         self.current_semester_label = ctk.CTkLabel(
             middle_frame, 
             text_color=self.COLOR_THEMES[self.current_color_theme][21],
-            text="No Semester Selected",
+            text="Please select a semester\n to View / Add subjects",
             font=("Roboto", 20, "bold")
         )
         self.current_semester_label.pack(pady=10)
@@ -366,7 +395,6 @@ class SOLARIS(ctk.CTk):
         # Subjects scrollable frame
         self.subjects_scrollable = ctk.CTkScrollableFrame(middle_frame, fg_color=self.COLOR_THEMES[self.current_color_theme][7])
         self.subjects_scrollable.pack(fill="both", expand=True, padx=10, pady=10)
-        self.show_add_new_subject_btn()
         
         # GPA display
         # GPA and CGPA display frame
@@ -392,9 +420,7 @@ class SOLARIS(ctk.CTk):
                                     highlightthickness=0)
         self.pie_chart.pack(padx=25, pady=25, expand=True, fill="both")
         
-        # Initialize semester data and variables
-        self.current_semester = None
-        self.semesters = self.load_subjects_from_json("subject_data.json")
+        
         self.refresh_semester_list()
         # Add after self.refresh_semester_list()
         cgpa = self.calculate_cgpa()
@@ -520,6 +546,7 @@ class SOLARIS(ctk.CTk):
             self.cgpa_label.configure(text=f"CGPA: {cgpa:.2f}")
             self.clear_subject_display()
             self.current_semester = None
+            self.current_semester_label.configure(text="Please select a semester\n to View / Add subjects")
 
     def clear_subject_display(self):
         for widget in self.subjects_scrollable.winfo_children():
@@ -722,7 +749,7 @@ class SOLARIS(ctk.CTk):
         grade_frame = ctk.CTkFrame(edit_frame, fg_color="transparent")
         grade_frame.pack(fill="x", pady=5)
         
-        ctk.CTkLabel(grade_frame, text="Grade:").pack(side="left", padx=5)
+        ctk.CTkLabel(grade_frame, text="Grade:", text_color="black").pack(side="left", padx=5)
         grade_dropdown = ctk.CTkOptionMenu(
             grade_frame,
             variable=grade_var,
@@ -734,7 +761,7 @@ class SOLARIS(ctk.CTk):
         credits_frame = ctk.CTkFrame(edit_frame, fg_color="transparent")
         credits_frame.pack(fill="x", pady=5)
         
-        ctk.CTkLabel(credits_frame, text="Credits:").pack(side="left", padx=5)
+        ctk.CTkLabel(credits_frame, text="Credits:", text_color="black").pack(side="left", padx=5)
         credits_entry = ctk.CTkEntry(credits_frame, width=70)
         credits_entry.insert(0, str(subject_info["credits"]))
         credits_entry.pack(side="left", padx=5)
@@ -852,6 +879,8 @@ class SOLARIS(ctk.CTk):
         if total_credits > 0:
             return total_points / total_credits
         return 0.0
+    
+    
 
     
     def draw_pie_chart(self, sub_weight_set):
@@ -1073,7 +1102,7 @@ class SOLARIS(ctk.CTk):
         self.grade_dropdown.pack(pady=(0, 15))
         
         # Credits input
-        ctk.CTkLabel(main_frame, text="Credits:", font=("Roboto", 14)).pack(anchor="w", pady=(10, 5))
+        ctk.CTkLabel(main_frame, text="Credits:", font=("Roboto", 14), text_color="white").pack(anchor="w", pady=(10, 5))
         self.credits_entry = ctk.CTkEntry(main_frame, width=300, height=35)
         self.credits_entry.pack(pady=(0, 15))
         
@@ -1556,14 +1585,8 @@ class SOLARIS(ctk.CTk):
 
 
 
-
-
-
-
-
-
-
     # TO-DO LIST
+     # TO-DO LIST
     def setup_todo_list(self):
         tab = self.tabview.tab("To-Do List")
         
@@ -1612,7 +1635,7 @@ class SOLARIS(ctk.CTk):
         # Create new window
         self.task_window = ctk.CTkToplevel(self)
         self.task_window.title("Create New Task")
-        self.task_window.geometry("400x650")
+        self.task_window.geometry("400x675")
         self.task_window.resizable(False, False)
         self.task_window.grab_set()  # Make window modal
         
@@ -1634,6 +1657,16 @@ class SOLARIS(ctk.CTk):
         remarks_label.pack(padx=10, pady=5)
         self.remarks_text = ctk.CTkTextbox(self.task_window, width=300, height=100)
         self.remarks_text.pack(padx=10, pady=5)
+
+        # Category label
+        category_btn = ctk.CTkLabel(self.task_window, text="Category:" )
+        category_btn.pack(padx=10, pady=5)
+
+        # Initialise category dropdown button
+        self.category_var = ctk.StringVar(value="Select Category")
+        self.category_type = ctk.CTkOptionMenu(self.task_window, variable=self.category_var,
+                                               values=["Work","Home","Errands","Online"])
+        self.category_type.pack(padx=10, pady=5)
         
         # Buttons frame
         buttons_frame = ctk.CTkFrame(self.task_window)
@@ -1664,6 +1697,7 @@ class SOLARIS(ctk.CTk):
             "date_created": datetime.now().strftime("%Y-%m-%d"),
             "deadline": self.calendar.get_date(),
             "remarks": self.remarks_text.get("1.0", "end-1c").strip(),
+            "category": self.category_type.get(),
             "complete": False
         }
         
@@ -1756,6 +1790,25 @@ class SOLARIS(ctk.CTk):
             )
             remarks_text.pack(anchor="w", padx=(10, 0))
 
+        # Category section
+        if task["category"]:
+            category_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+            category_frame.pack(fill="x", pady=(0,10))
+
+            category_header = ctk.CTkLabel(
+                category_frame,
+                text="📋 Category:",
+                font=("Arial", 12, "bold")
+            )
+            category_header.pack(anchor="e")
+
+            category_label = ctk.CTkLabel(
+                category_frame,
+                text=task['category'],
+                font=("Arial", 12)
+            )
+            category_label.pack(anchor="e",padx=(0,22))
+
         # Buttons frame
         buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         buttons_frame.pack(fill="x", pady=(10, 0))
@@ -1779,7 +1832,7 @@ class SOLARIS(ctk.CTk):
                 command=lambda t=task: self.delete_task(t),
                 height=32,
                 fg_color="#dc3545",
-                hover_color=self.COLORS['red']['hover']
+                hover_color="#a82835"
             )
             delete_btn.pack(side="left")
         else:
@@ -1830,6 +1883,7 @@ class SOLARIS(ctk.CTk):
             "date_created": datetime.now().strftime("%Y-%m-%d"),
             "deadline": old_task["deadline"],
             "remarks": old_task["remarks"],
+            "category": old_task["category"],
             "complete": False
         }
         
@@ -1863,7 +1917,6 @@ class SOLARIS(ctk.CTk):
     def save_tasks(self):
         with open("tasks.json", "w") as file:
             json.dump({"tasks": list(self.tasks.values())}, file, indent=4)
-    
 
     def setup_settings(self):
         """Setup the Settings tab with appearance and scaling controls"""

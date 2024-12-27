@@ -1,32 +1,11 @@
 {
     "tasks": [
         {
-            "name": "Complete Math Assignment",
-            "date_created": "2024-12-20",
+            "name": "DO METH",
+            "date_created": "2024-12-27",
             "deadline": "2024-12-27",
-            "remarks": "Chapters 4-6 exercises, focus on integration problems",
-            "complete": false
-        },
-        {
-            "name": "Study for Physics Final",
-            "date_created": "2024-12-19",
-            "deadline": "2024-12-28",
-            "remarks": "Review mechanics and thermodynamics",
-            "complete": false
-        },
-        {
-            "name": "Write English Essay",
-            "date_created": "2024-12-15",
-            "deadline": "2024-12-23",
-            "remarks": "Topic: Impact of Technology on Modern Society",
-            "complete": true,
-            "completion_date": "2024-12-22"
-        },
-        {
-            "name": "Programming Project",
-            "date_created": "2024-12-18",
-            "deadline": "2024-12-30",
-            "remarks": "Build a simple calculator application",
+            "remarks": "do more meth",
+            "category": "Work",
             "complete": false
         }
     ]
