@@ -4,9 +4,9 @@
             "subjects": [
                 {
                     "subject": "Calculus I",
-                    "grade": "A-",
-                    "gp": 3.75,
-                    "credits": 4
+                    "grade": "B+",
+                    "gp": 3.33,
+                    "credits": 5.0
                 },
                 {
                     "subject": "English Composition",
@@ -27,13 +27,13 @@
                     "credits": 3.0
                 },
                 {
-                    "subject": "damn 2",
-                    "grade": "A",
+                    "subject": "ijdwfwid",
+                    "grade": "A+",
                     "gp": 4.0,
                     "credits": 12.0
                 }
             ],
-            "gpa": 3.8885185185185187
+            "gpa": 3.793846153846154
         },
         "Semester 2": {
             "subjects": [
@@ -63,6 +63,29 @@
                 }
             ],
             "gpa": 3.8366666666666664
+        },
+        "Semester 3": {
+            "subjects": [
+                {
+                    "subject": "ENGLIS",
+                    "grade": "C+",
+                    "gp": 2.33,
+                    "credits": 3.0
+                },
+                {
+                    "subject": "DESIGN",
+                    "grade": "A+",
+                    "gp": 4.0,
+                    "credits": 4.0
+                },
+                {
+                    "subject": "C&R",
+                    "grade": "A-",
+                    "gp": 3.75,
+                    "credits": 3.0
+                }
+            ],
+            "gpa": 3.1990000000000003
         }
     }
 }

@@ -1,11 +1,26 @@
 {
     "tasks": [
         {
-            "name": "DO METH",
+            "name": "science (Recreated)",
             "date_created": "2024-12-27",
-            "deadline": "2024-12-27",
-            "remarks": "do more meth",
+            "deadline": "2024-12-30",
+            "remarks": "",
             "category": "Work",
+            "complete": true,
+            "completion_date": "2024-12-31"
+        },
+        {
+            "name": "science (Recreated) (Recreated)",
+            "date_created": "2024-12-31",
+            "deadline": "2024-12-30",
+            "remarks": "",
+            "complete": false
+        },
+        {
+            "name": "science (Recreated) (Recreated) (Recreated)",
+            "date_created": "2024-12-31",
+            "deadline": "2024-12-30",
+            "remarks": "",
             "complete": false
         }
     ]
